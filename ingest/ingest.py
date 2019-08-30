@@ -3,67 +3,146 @@ import requests
 import json
 import os
 from os.path import expanduser
-from subprocess import call,check_output
+from subprocess import call,check_output,Popen,PIPE
 import subprocess
 import json,pickle
 import shutil 
 import glob2
 import boto3
+from datetime import datetime
 
 
 with open("config.yml", 'r') as stream:
     config = yaml.load(stream, Loader=yaml.FullLoader)
 
 orgs = config['orgs']
+ind_repos = config['individual_repos']
 cloned_project_path = expanduser("~") + '/cloned_projects'
 
 def get_org_repos():
     org_repos = []
-
-    # for each org, get a list of all repos
     for org in orgs:
-        org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+config['github_access_token'])
+        org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['github_access_token'])
         org_repos = org_repos + json.loads(org_repos_response.text)
 
+    for ind in ind_repos:
+        response = requests.get('https://api.github.com/repos/' + ind + '?access_token='+os.environ['github_access_token'])
+        ind_repo = []
+        ind_repo.append(json.loads(response.text))
+        org_repos = org_repos + ind_repo
     return org_repos
 
 def map_repo_attributes(org_repos):
     repos = []
     for org_repo in org_repos:
-        clone_dir = cloned_project_path+'/'+org_repo['owner']['login']+'/'+org_repo['name']
-        repo = {}
-        git_url = org_repo['clone_url']
-        
-        adjusted_url = git_url.replace('https://','https://' + config['github_user'] + ':' + config['github_access_token']+'@')
 
+        clone_dir = cloned_project_path+'/'+org_repo['owner']['login']+'/'+org_repo['name']
+        git_url = org_repo['clone_url']
+        adjusted_url = git_url.replace('https://','https://' + os.environ['github_user'] + ':' + os.environ['github_access_token']+'@')
+
+        org_obj = {}
+        org_obj['organization'] = str(org_repo['owner']['login'])
+        org_obj['organization_url'] = str(org_repo['owner']['html_url'])
+        org_obj['org_avatar_url'] = str(org_repo['owner']['avatar_url'])
+        org_obj['org_type'] = str(org_repo['owner']['type'])
+
+
+        ##### GITHUB SPECIFIC FIELDS#########
+
+        repo = {}
         repo['_id'] = str(org_repo['owner']['id'])+'_'+str(org_repo['id'])
+        repo['org_obj'] = org_obj
+        repo['env'] = 'PUBLIC'
         repo['project_name'] = org_repo['name']
-        repo['clone_url'] = adjusted_url
+        repo['html_url'] = org_repo['html_url']
+        repo['description'] = org_repo['description']
         repo['language'] = org_repo['language']
+        repo['stargazers'] = org_repo['stargazers_count']
+        repo['forksJson'] = getForks(json.loads(get_github_property(org_repo, 'forks')))
+        repo['releasesJson'] = getReleases(json.loads(get_github_property(org_repo, 'releases')))
+        repo['pushed_at'] = org_repo['pushed_at']
+        repo['created_at'] = org_repo['created_at']
+        repo['contributors'] = getRepoContributions(json.loads(get_github_property(org_repo, 'contributors')))['contributorsMap']
+        repo['languagesJson'] = json.loads(get_github_property(org_repo, 'languages'))
+        readmeobj = json.loads(get_github_property(org_repo, 'contents/README.md'))
+        if 'content' in readmeobj:
+            repo['readmeRaw'] = readmeobj
+        else:
+            repo['readmeRaw'] = {'content': '', 'url': ''}
+        repo['numWatchers'] = len(json.loads(get_github_property(org_repo, 'subscribers')))
+        repo['contributorsCount'] = len(repo['contributors'])
+        repo['numCommits'] = getRepoContributions(json.loads(get_github_property(org_repo, 'contributors')))['commitTotal']
+        repo['calculatedRank'] = calculateRanks(int(repo['stargazers']), int(repo['numWatchers']), int(repo['contributorsCount']), int(repo['numCommits']))
+        repo['autosuggest'] = []
         repo['org'] = org_repo['owner']['login']
-        repo['cloned_project_path'] = clone_dir
+        repo['cloned_project_path'] = clone_dir 
+        repo['clone_url'] = adjusted_url
         repos.append(repo)
     return repos
+
+def calculateRanks(stargazers_count, watchers_count, contributors_count, commit_count):
+    result = (stargazers_count*3) + (watchers_count*4) + (contributors_count*5) + commit_count
+    return result
+
+def getAutoSuggestFields(repoName, repoDesc, orgName, languages, contributors):
+    contributorsList = []
+    for contributor in contributors:
+        contributorsList.append(contributors['login'])
+
+def getReleases(releasesJson):
+    results = []
+    for release in releasesJson:
+        result = {}
+        result['tag_name'] = release['tag_name']
+        result['name'] = release['name']
+        result['id'] = release['id']
+        # none of the test cases currently have assets or download counts. Will test this later
+        result['assets'] = []
+        result['downloads'] = 0
+        results.append(result)
+    return results
+
+def getForks(forksJson):
+    result = []
+    for fork in forksJson:
+        repo = {}
+        repo['id'] = str(fork['owner']['id']) + '-' + str(fork['id'])
+        repo['name'] = str(fork['name'])
+        repo['org_name'] = str(fork['owner']['login'])
+        result.append(repo)
+    return result
+
+def getRepoContributions(contributorsJson):
+    commitTotal = 0
+    contributors = []
+    for contributorJson in contributorsJson:
+        commitTotal += contributorJson['contributions']
+        contributor = {}
+        contributor['user_type'] = contributorJson['type']
+        if(contributorJson['type']=='User'):
+            contributor['username'] = contributorJson['login']
+            contributor['profile_url'] = contributorJson['html_url']
+            contributor['avatar_url'] = contributorJson['avatar_url']
+        else:
+            contributor['username'] = ''
+            contributor['profile_url'] = ''
+            contributor['avatar_url'] = ''
+        contributors.append(contributor)
+    contributionMap = {'commitTotal': commitTotal, 'contributorsMap': contributors}
+    return contributionMap
+
+        
+
+
+def get_github_property(repo, property_name):
+    org = repo['owner']['login']
+    name = repo['name']
+    return requests.get('https://api.github.com/repos/' + org + '/' + name + '/' + property_name + '?access_token='+os.environ['github_access_token']).text
 
 def clone_repos(repos):
   for repo in repos:
     setup_cloning_dir(repo['org'], repo['project_name'])
     call(["git","clone",repo['clone_url']])
-
-def process_cloned_project(repo):
-    repo_map = {}
-    if "cloned_project_path" in repo and repo["cloned_project_path"] is not None:
-        src_dir = repo['cloned_project_path']+'/*/'
-        lists = glob2.glob(src_dir)
-        if(len(lists) > 0):
-            repo_map['_id'] = repo['_id']
-            repo_map['project_name'] = repo['project_name']
-            repo_map['src_list'] = lists
-            repo_map['org'] = repo['org']
-            repo_map['language'] = repo['language']
-            repo_map['root_dir'] = repo['cloned_project_path']
-    return repo_map
-        
 
 def setup_cloning_dir(org, repo):
     orgdir = cloned_project_path + '/' + org
@@ -77,20 +156,18 @@ def setup_cloning_dir(org, repo):
         os.chdir(orgdir)
 
 def execute_sonar(repo):    
-    aggregated_src = ''
+
     exclusions = '**/system/**, **/test/**, **/img/**, **/logs/**, **/fonts/**, **/generated-sources/**, **/packages/**, **/docs/**, **/node_modules/**, **/bower_components/**,**/dist/**,**/unity.js,**/bootstrap.css, **/tools/**'
-    for src in repo['src_list']:
-        aggregated_src = src + "," + aggregated_src
-    print("Building sonar configuration file...")
-    print(repo)
-    file_object = open(repo['root_dir']+"/sonar-project.properties", 'w')
+
+    file_object = open(repo['cloned_project_path']+"/sonar-project.properties", 'w')
+
     file_object.write("sonar.projectKey="+repo['org'] + ":" + repo['project_name'])
     file_object.write("\n")
     file_object.write("sonar.projectName="+repo['project_name']+" of "+repo["org"])
     file_object.write("\n")
     file_object.write("sonar.projectVersion=1.0")
     file_object.write("\n")
-    file_object.write("sonar.sources="+aggregated_src)
+    file_object.write("sonar.sources="+repo['cloned_project_path'])
     file_object.write("\n")
     file_object.write("sonar.exclusions=file:"+exclusions)
     file_object.write("\n")
@@ -98,7 +175,7 @@ def execute_sonar(repo):
     file_object.close()
     
     curr_dir = os.getcwd()
-    os.chdir(repo['root_dir'])
+    os.chdir(repo['cloned_project_path'])
     call('pwd')
     call(config['sonar_runner_path'], shell=True)
     os.chdir(curr_dir)
@@ -110,7 +187,7 @@ def get_sonar_metrics(repo):
 
     res = '_response'
     for metric in metrics_list:
-        returned_res = requests.get(config['sonar_api_local_base_url']+'?resource='+repo['org']+':'+repo['project_name']+"&metrics="+metric)
+        returned_res = requests.get(config['sonar_api_local_base_url']+'?resource='+repo['org']+':'+repo['project_name']+"&metrics="+metric, auth=('admin', 'admin'))
         returned_json = {}
         if(returned_res.status_code == 200):
             if(len(json.loads(returned_res.text)) > 0):
@@ -122,25 +199,177 @@ def get_sonar_metrics(repo):
                         health_metrics_map[metric] = {}
             else:
                 health_metrics_map[metric] = {}
-    repo['metrics'] = health_metrics_map
+    metrics_result = {}
+    for metric in health_metrics_map:
+        if 'key' in health_metrics_map[metric]:
+            metrics_result.update({health_metrics_map[metric]['key']: health_metrics_map[metric]})
+    repo['metrics'] = metrics_result
     return repo
 
+def _process_metric_line(line):
+    if line is None:
+        return None, None
 
-def publish_to_sqs(repo_json):
-    sqs = boto3.client('sqs')
-    queue_url = config['sqs_queue']
-    response = sqs.send_message(QueueUrl=queue_url,MessageBody=repo_json)
-    print(response)
+    supportedMetrics = ["Scanned directories","Scanned files","Infected files","Data scanned","Time"]
+
+    parts = line.split(':')
+    if len(parts) != 2:
+        return None, None
+
+    name = parts[0].strip()
+    if name.lower() not in (x.lower() for x in supportedMetrics):
+        return None, None
+
+    name = name.lower().replace(" ","_")
+    val = parts[1].strip()
+    if val.isdigit():
+        v = int(val)
+        val = v
+
+    return name, val
+
+def _process_file_line(line, ref_path):
+    if line is None:
+        return None
+
+    parts = line.split(" ")
+    if len(parts) != 3:
+        return None
+
+    result = {}
+    file_name = parts[0][:-1]
+    p = file_name.find(ref_path)
+    if p >= 0:
+        file_name = file_name[p:]
+
+    result['filename'] = file_name
+    result['virus'] = parts[1]
+    return result
+
+def runVirusScan(target):
+    # run VScan
+    print('Running VScan on ' + target)
+    proc = Popen(['clamscan', '-i', '-o', '-r', target], stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
+    output, err = proc.communicate()
+
+    lines = output.splitlines()
+    if len(lines) <= 0:
+        return None
+
+    result = {}
+    files = []
+    metrics = False
+    for line in lines:
+        if not metrics:
+            if "FOUND" in line:
+                pline = _process_file_line(line, ref_path)
+                if pline is None:
+                    continue
+                files.append(pline)
+            if "SCAN SUMMARY" in line:
+                metrics = True
+                continue
+        else:
+            mName, mValue = _process_metric_line(line)
+            if mName is None:
+                continue
+            result[mName] = mValue
+    result['lastscan'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    result['reported_files'] = files
+    return result
+
+def getESCodeOutput(repo_json):
+    result = {}
+    result['created_at'] = repo_json['created_at']
+    result['language'] = repo_json['language']
+    # metrics
+    result['metrics'] = repo_json['metrics']
+    # organization
+    result['organization'] = repo_json['org_obj']
+    result['origin'] = 'PUBLIC'
+    result['project_name'] = repo_json['project_name']
+    result['stage_id'] = repo_json['_id']
+    result['stage_source'] = "SONAR"
+    result['updated_at'] = repo_json['pushed_at']
+    return json.dumps(result)
+
+def getESProjectOutput(repo_json):
+    vsResults = runVirusScan(repo_json['cloned_project_path'])
+
+    result = {}
+
+    result['vscan'] = vsResults
+    result['commits'] = repo_json['numCommits']
+    result['contributors'] = repo_json['contributorsCount']
+    result['contributors_list'] = repo_json['contributors']
+    result['created_at'] = repo_json['created_at']
+    
+    result['forks'] = {'forkedRepos': repo_json['forksJson']}
+
+    result['full_name'] = repo_json['org_obj']['organization'] + '/' + repo_json['project_name']
+    result['languages'] = repo_json['languagesJson']
+    result['organization'] = repo_json['org_obj']
+    result['origin'] = 'PUBLIC'
+
+    result['project_description'] = repo_json['description']
+    
+    result['project_name'] = repo_json['project_name']
+    result['rank'] = repo_json['calculatedRank']
+    result['readMe'] = {'content': repo_json['readmeRaw']['content'], 'url': repo_json['readmeRaw']['url']}
+    result['releases'] = []
+    result['repository'] = repo_json['project_name']
+    result['repository_url'] = repo_json['html_url']
+    result['stage_id'] = repo_json['_id']
+    result['stars'] = repo_json['stargazers']
+    result['suggest'] = []
+    result['updated_at'] = repo_json['pushed_at']
+    result['watchers'] = repo_json['numWatchers']
+
+    return json.dumps(result)
+
+def createESInsertString(repo_json, index):
+    idstr = json.loads(repo_json)['stage_id']
+    return '{"index": {"_index": "' + index + '", "_type": "project", "_id": "' + idstr + '"}}'
 
 if __name__ == "__main__":
-    org_repos = get_org_repos()
-    repos = map_repo_attributes(org_repos)
-    clone_repos(repos)
-    for repo in repos:
-        processed_repo = process_cloned_project(repo)
-        if bool(processed_repo):
-            execute_sonar(processed_repo)
-            filtered_repo = get_sonar_metrics(processed_repo)
-            print(filtered_repo)
-            publish_to_sqs(str(filtered_repo))
-    print ("Done")
+    # document = ''
+    # org_repos = get_org_repos()
+    # repos = map_repo_attributes(org_repos)
+    # clone_repos(repos)
+    # for repo in repos:
+    #     print('Processing ' + repo['project_name'])
+    #     # processed_repo = process_cloned_project(repo)
+    #     # if bool(processed_repo):
+    #     # execute_sonar(processed_repo)
+    #     execute_sonar(repo)
+    #     # repo_with_metrics = get_sonar_metrics(processed_repo)
+    #     repo_with_metrics = get_sonar_metrics(repo)
+
+    #     es_code_json = getESCodeOutput(repo_with_metrics)
+    #     es_project_json = getESProjectOutput(repo)
+
+    #     document += createESInsertString(es_code_json, 'code') + '\r\n'
+    #     document += es_code_json + '\r\n'
+
+    #     document += createESInsertString(es_project_json, 'projects') + '\r\n'
+    #     document += es_project_json + '\r\n'
+
+    #     print(repo['project_name'] + ' processed')
+
+
+    # # # send to ES
+    print('Writing data to ES')
+
+    # header = {'Content-type': 'application/json'}
+    # es_post_response = requests.post(os.environ['elasticsearch_api_base_url'] + '/_bulk', data=document, headers=header)
+    # # print(es_post_response.text)
+
+    print('Data written to ES')
+
+    # es_get_response = requests.get('http://localhost:9200/projects/_search/?size=10000')
+    # # print(es_get_response.text)
+    # print('writing to Kindred...')
+    # kindred_post_response = requests.post('http://localhost:8082/recommendation-service/api/v1/update_doc_sim', data=es_get_response.text, headers=header)
+    # print(kindred_post_response.text)
+
+    print ("Donions!")
