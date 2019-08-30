@@ -332,36 +332,36 @@ def createESInsertString(repo_json, index):
     return '{"index": {"_index": "' + index + '", "_type": "project", "_id": "' + idstr + '"}}'
 
 if __name__ == "__main__":
-    # document = ''
-    # org_repos = get_org_repos()
-    # repos = map_repo_attributes(org_repos)
-    # clone_repos(repos)
-    # for repo in repos:
-    #     print('Processing ' + repo['project_name'])
-    #     # processed_repo = process_cloned_project(repo)
-    #     # if bool(processed_repo):
-    #     # execute_sonar(processed_repo)
-    #     execute_sonar(repo)
-    #     # repo_with_metrics = get_sonar_metrics(processed_repo)
-    #     repo_with_metrics = get_sonar_metrics(repo)
+    document = ''
+    org_repos = get_org_repos()
+    repos = map_repo_attributes(org_repos)
+    clone_repos(repos)
+    for repo in repos:
+        print('Processing ' + repo['project_name'])
+        # processed_repo = process_cloned_project(repo)
+        # if bool(processed_repo):
+        # execute_sonar(processed_repo)
+        execute_sonar(repo)
+        # repo_with_metrics = get_sonar_metrics(processed_repo)
+        repo_with_metrics = get_sonar_metrics(repo)
 
-    #     es_code_json = getESCodeOutput(repo_with_metrics)
-    #     es_project_json = getESProjectOutput(repo)
+        es_code_json = getESCodeOutput(repo_with_metrics)
+        es_project_json = getESProjectOutput(repo)
 
-    #     document += createESInsertString(es_code_json, 'code') + '\r\n'
-    #     document += es_code_json + '\r\n'
+        document += createESInsertString(es_code_json, 'code') + '\r\n'
+        document += es_code_json + '\r\n'
 
-    #     document += createESInsertString(es_project_json, 'projects') + '\r\n'
-    #     document += es_project_json + '\r\n'
+        document += createESInsertString(es_project_json, 'projects') + '\r\n'
+        document += es_project_json + '\r\n'
 
-    #     print(repo['project_name'] + ' processed')
+        print(repo['project_name'] + ' processed')
 
 
     # # # send to ES
     print('Writing data to ES')
 
-    # header = {'Content-type': 'application/json'}
-    # es_post_response = requests.post(os.environ['elasticsearch_api_base_url'] + '/_bulk', data=document, headers=header)
+    header = {'Content-type': 'application/json'}
+    es_post_response = requests.post(os.environ['elasticsearch_api_base_url'] + '/_bulk', data=document, headers=header)
     # # print(es_post_response.text)
 
     print('Data written to ES')
