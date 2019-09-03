@@ -38,7 +38,7 @@ def map_repo_attributes(org_repos):
 
         clone_dir = cloned_project_path+'/'+org_repo['owner']['login']+'/'+org_repo['name']
         git_url = org_repo['clone_url']
-        adjusted_url = git_url.replace('https://','https://' + os.environ['github_user'] + ':' + os.environ['GITHUB_ACCESS_TOKEN']+'@')
+        adjusted_url = git_url.replace('https://','https://' + os.environ['GITHUB_USER'] + ':' + os.environ['GITHUB_ACCESS_TOKEN']+'@')
 
         org_obj = {}
         org_obj['organization'] = str(org_repo['owner']['login'])
@@ -343,7 +343,7 @@ if __name__ == "__main__":
     # # # send to ES
     print('Writing data to ES')
     header = {'Content-type': 'application/json'}
-    es_post_response = requests.post(os.environ['elasticsearch_api_base_url'] + '/_bulk', data=document, headers=header)
+    es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=document, headers=header)
     print('Data written to ES')
     print(es_post_response)
 
