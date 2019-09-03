@@ -13,8 +13,8 @@ ENV SONAR_VERSION=6.1 \
 
 ENV JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
 
-# Http port
-EXPOSE 9000
+# Http port (for local testing)
+# EXPOSE 9000
 
 RUN apk update \
     && apk upgrade \
@@ -33,12 +33,9 @@ RUN apk add --no-cache python3 \
     rm -r /root/.cache
 
 RUN set -x \
-#   && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys F1182E81C792928921DBCAB4CFCA4A29D26468DE \
     && mkdir /opt \
     && cd /opt \
     && curl -o sonarqube.zip -fSL https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-$SONAR_VERSION.zip \
-#   && curl -o sonarqube.zip.asc -fSL https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-$SONAR_VERSION.zip.asc \
-#   && gpg --batch --verify sonarqube.zip.asc sonarqube.zip \
     && unzip sonarqube.zip \
     && mv sonarqube-$SONAR_VERSION sonarqube \
     && rm sonarqube.zip* \

@@ -2,9 +2,9 @@
 
 ## Required Pre-Build Configurations
 The following environment variables need to be configured:
-1. `github_user` 
-2. `github_access_token` (required for execution to work without hitting Github rate limits)
-3. `elasticsearch_api_base_url` (eg: http://localhost:9200)
+1. `GITHUB_USER` 
+2. `GITHUB_ACCESS_TOKEN` (required for execution to work without hitting Github rate limits)
+3. `ELASTICSEARCH_API_BASE_URL` (eg: http://localhost:9200)
 
 
 ## Execution

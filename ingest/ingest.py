@@ -22,11 +22,11 @@ cloned_project_path = expanduser("~") + '/cloned_projects'
 def get_org_repos():
     org_repos = []
     for org in orgs:
-        org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['github_access_token'])
+        org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
         org_repos = org_repos + json.loads(org_repos_response.text)
 
     for ind in ind_repos:
-        response = requests.get('https://api.github.com/repos/' + ind + '?access_token='+os.environ['github_access_token'])
+        response = requests.get('https://api.github.com/repos/' + ind + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
         ind_repo = []
         ind_repo.append(json.loads(response.text))
         org_repos = org_repos + ind_repo
@@ -38,7 +38,7 @@ def map_repo_attributes(org_repos):
 
         clone_dir = cloned_project_path+'/'+org_repo['owner']['login']+'/'+org_repo['name']
         git_url = org_repo['clone_url']
-        adjusted_url = git_url.replace('https://','https://' + os.environ['github_user'] + ':' + os.environ['github_access_token']+'@')
+        adjusted_url = git_url.replace('https://','https://' + os.environ['github_user'] + ':' + os.environ['GITHUB_ACCESS_TOKEN']+'@')
 
         org_obj = {}
         org_obj['organization'] = str(org_repo['owner']['login'])
@@ -133,7 +133,7 @@ def getRepoContributions(contributorsJson):
 def get_github_property(repo, property_name):
     org = repo['owner']['login']
     name = repo['name']
-    return requests.get('https://api.github.com/repos/' + org + '/' + name + '/' + property_name + '?access_token='+os.environ['github_access_token']).text
+    return requests.get('https://api.github.com/repos/' + org + '/' + name + '/' + property_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN']).text
 
 def clone_repos(repos):
   for repo in repos:
@@ -340,13 +340,12 @@ if __name__ == "__main__":
         print(repo['project_name'] + ' processed')
 
 
-        break
-
     # # # send to ES
     print('Writing data to ES')
     header = {'Content-type': 'application/json'}
     es_post_response = requests.post(os.environ['elasticsearch_api_base_url'] + '/_bulk', data=document, headers=header)
     print('Data written to ES')
+    print(es_post_response)
 
     # # # Write to Kindred (Not yet supported)
 
