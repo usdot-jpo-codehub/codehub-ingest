@@ -46,7 +46,6 @@ def map_repo_attributes(org_repos):
         org_obj['org_avatar_url'] = str(org_repo['owner']['avatar_url'])
         org_obj['org_type'] = str(org_repo['owner']['type'])
 
-
         ##### GITHUB SPECIFIC FIELDS#########
 
         repo = {}
@@ -130,9 +129,6 @@ def getRepoContributions(contributorsJson):
         contributors.append(contributor)
     contributionMap = {'commitTotal': commitTotal, 'contributorsMap': contributors}
     return contributionMap
-
-        
-
 
 def get_github_property(repo, property_name):
     org = repo['owner']['login']
@@ -247,7 +243,6 @@ def _process_file_line(line, ref_path):
     return result
 
 def runVirusScan(target):
-    # run VScan
     print('Running VScan on ' + target)
     proc = Popen(['clamscan', '-i', '-o', '-r', target], stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
     output, err = proc.communicate()
@@ -282,9 +277,7 @@ def getESCodeOutput(repo_json):
     result = {}
     result['created_at'] = repo_json['created_at']
     result['language'] = repo_json['language']
-    # metrics
     result['metrics'] = repo_json['metrics']
-    # organization
     result['organization'] = repo_json['org_obj']
     result['origin'] = 'PUBLIC'
     result['project_name'] = repo_json['project_name']
@@ -297,22 +290,17 @@ def getESProjectOutput(repo_json):
     vsResults = runVirusScan(repo_json['cloned_project_path'])
 
     result = {}
-
     result['vscan'] = vsResults
     result['commits'] = repo_json['numCommits']
     result['contributors'] = repo_json['contributorsCount']
     result['contributors_list'] = repo_json['contributors']
     result['created_at'] = repo_json['created_at']
-    
     result['forks'] = {'forkedRepos': repo_json['forksJson']}
-
     result['full_name'] = repo_json['org_obj']['organization'] + '/' + repo_json['project_name']
     result['languages'] = repo_json['languagesJson']
     result['organization'] = repo_json['org_obj']
     result['origin'] = 'PUBLIC'
-
     result['project_description'] = repo_json['description']
-    
     result['project_name'] = repo_json['project_name']
     result['rank'] = repo_json['calculatedRank']
     result['readMe'] = {'content': repo_json['readmeRaw']['content'], 'url': repo_json['readmeRaw']['url']}
@@ -338,11 +326,7 @@ if __name__ == "__main__":
     clone_repos(repos)
     for repo in repos:
         print('Processing ' + repo['project_name'])
-        # processed_repo = process_cloned_project(repo)
-        # if bool(processed_repo):
-        # execute_sonar(processed_repo)
         execute_sonar(repo)
-        # repo_with_metrics = get_sonar_metrics(processed_repo)
         repo_with_metrics = get_sonar_metrics(repo)
 
         es_code_json = getESCodeOutput(repo_with_metrics)
@@ -350,21 +334,21 @@ if __name__ == "__main__":
 
         document += createESInsertString(es_code_json, 'code') + '\r\n'
         document += es_code_json + '\r\n'
-
         document += createESInsertString(es_project_json, 'projects') + '\r\n'
         document += es_project_json + '\r\n'
 
         print(repo['project_name'] + ' processed')
 
 
+        break
+
     # # # send to ES
     print('Writing data to ES')
-
     header = {'Content-type': 'application/json'}
     es_post_response = requests.post(os.environ['elasticsearch_api_base_url'] + '/_bulk', data=document, headers=header)
-    # # print(es_post_response.text)
-
     print('Data written to ES')
+
+    # # # Write to Kindred (Not yet supported)
 
     # es_get_response = requests.get('http://localhost:9200/projects/_search/?size=10000')
     # # print(es_get_response.text)

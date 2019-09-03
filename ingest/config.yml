@@ -1,11 +1,19 @@
-# List of Github orgs to be cycled through and ingested
+# The following configurations need to be set as environment variables:
+# - elasticsearch_api_base_url
+# - github_user
+# - github_access_token
+
+
+# List of Github organizations to be cycled through and ingested
 orgs:
  - usdot-jpo-ode
  - usdot-its-jpo-data-portal
  - VolpeUSDOT
  - usdot-jpo-sdcsdw
 
+# List of individual repos to be ingested
 individual_repos:
+  # Test repo:
  - nickprice-bah/user_repo
 
 sonar_health_metrics:
@@ -25,15 +33,5 @@ sonar_health_metrics:
   - violations
   - new_violations
 
-
-
 sonar_runner_path: /opt/sonar-runner/bin/sonar-runner
-
-
 sonar_api_local_base_url: http://localhost:9000/api/resources
-
-# ENV Variables
-
-# elasticsearch_api_base_url: http://localhost:9200
-# github_user:
-# github_access_token: 
