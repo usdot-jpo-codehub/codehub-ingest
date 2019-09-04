@@ -1,5 +1,6 @@
 # FROM java:8
-FROM alpine:3.7
+#FROM alpine:3.8
+FROM python:3.7-alpine
 
 ENV SONAR_VERSION=6.1 \
     SONARQUBE_HOME=/opt/sonarqube \
@@ -22,7 +23,8 @@ RUN apk update \
     && apk add --no-cache --virtual=build-dependencies unzip \
     && apk add --no-cache curl \
     && apk add --no-cache openjdk8-jre \
-    && apk add --no-cache git
+    && apk add --no-cache git \
+    && apk add --no-cache clamav
 
 RUN apk add --no-cache python3 \
     && python3 -m ensurepip \
@@ -33,7 +35,7 @@ RUN apk add --no-cache python3 \
     rm -r /root/.cache
 
 RUN set -x \
-    && mkdir /opt \
+    # && mkdir /opt \
     && cd /opt \
     && curl -o sonarqube.zip -fSL https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-$SONAR_VERSION.zip \
     && unzip sonarqube.zip \
@@ -59,6 +61,8 @@ RUN cd $SONARQUBE_HOME/extensions/plugins \
     && curl -o sonar-web-plugin-2.4.jar -fSL http://binaries.sonarsource.com/Distribution/sonar-web-plugin/sonar-web-plugin-2.4.jar \
     && curl -o sonar-scm-git-plugin-1.2.jar -fSL http://binaries.sonarsource.com/Distribution/sonar-scm-git-plugin/sonar-scm-git-plugin-1.2.jar \
     && curl -o sonar-scm-svn-plugin-1.3.jar -fSL http://binaries.sonarsource.com/Distribution/sonar-scm-svn-plugin/sonar-scm-svn-plugin-1.3.jar
+
+RUN freshclam
 
 
 VOLUME ["$SONARQUBE_HOME/data", "$SONARQUBE_HOME/extensions"]
