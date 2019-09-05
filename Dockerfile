@@ -2,6 +2,8 @@
 #FROM alpine:3.8
 FROM python:3.7-alpine
 
+ARG SONAR_MYSQL_ENDPOINT
+
 ENV SONAR_VERSION=6.1 \
     SONARQUBE_HOME=/opt/sonarqube \
     SONAR_RUNNER_VERSION=2.4 \
