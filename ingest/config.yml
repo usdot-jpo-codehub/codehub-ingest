@@ -1,7 +1,7 @@
 # The following configurations need to be set as environment variables:
-# - elasticsearch_api_base_url
-# - github_user
-# - github_access_token
+# - ELASTICSEARCH_API_BASE_URL
+# - GITHUB_USER
+# - GITHUB_ACCESS_TOKEN
 
 
 # List of Github organizations to be cycled through and ingested
@@ -13,8 +13,8 @@ orgs:
 
 # List of individual repos to be ingested
 individual_repos:
-  # Test repo:
- - nickprice-bah/user_repo
+ - usdot-jpo-sdc/sdc-dot-metadata-ingest
+
 
 sonar_health_metrics:
   - bugs 

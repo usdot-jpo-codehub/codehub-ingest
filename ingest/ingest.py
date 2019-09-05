@@ -10,6 +10,7 @@ import shutil
 import glob2
 import boto3
 from datetime import datetime
+import base64
 
 
 with open("config.yml", 'r') as stream:
@@ -23,6 +24,7 @@ def get_org_repos():
     org_repos = []
     for org in orgs:
         org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
+        print(org_repos_response.text)
         org_repos = org_repos + json.loads(org_repos_response.text)
 
     for ind in ind_repos:
@@ -65,6 +67,8 @@ def map_repo_attributes(org_repos):
         repo['languagesJson'] = json.loads(get_github_property(org_repo, 'languages'))
         readmeobj = json.loads(get_github_property(org_repo, 'contents/README.md'))
         if 'content' in readmeobj:
+            decoded_readme = str(base64.b64decode(readmeobj['content']),'utf-8')
+            readmeobj['content'] = decoded_readme
             repo['readmeRaw'] = readmeobj
         else:
             repo['readmeRaw'] = {'content': '', 'url': ''}
@@ -288,7 +292,7 @@ def getESCodeOutput(repo_json):
 
 def getESProjectOutput(repo_json):
     vsResults = runVirusScan(repo_json['cloned_project_path'])
-
+    
     result = {}
     result['vscan'] = vsResults
     result['commits'] = repo_json['numCommits']
@@ -297,6 +301,7 @@ def getESProjectOutput(repo_json):
     result['created_at'] = repo_json['created_at']
     result['forks'] = {'forkedRepos': repo_json['forksJson']}
     result['full_name'] = repo_json['org_obj']['organization'] + '/' + repo_json['project_name']
+    result['language'] = repo_json['language']
     result['languages'] = repo_json['languagesJson']
     result['organization'] = repo_json['org_obj']
     result['origin'] = 'PUBLIC'
@@ -339,13 +344,12 @@ if __name__ == "__main__":
 
         print(repo['project_name'] + ' processed')
 
-
     # # # send to ES
     print('Writing data to ES')
     header = {'Content-type': 'application/json'}
     es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=document, headers=header)
     print('Data written to ES')
-    print(es_post_response)
+    print(es_post_response.text)
 
     # # # Write to Kindred (Not yet supported)
 
