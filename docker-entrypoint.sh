@@ -6,7 +6,8 @@ if [ "${1:0:1}" != '-' ]; then
   exec "$@"
 fi
 
-echo 'Sonar URL: $SONARQUBE_JDBC_URL'
+echo 'Sonar URL: '
+echo $SONARQUBE_JDBC_URL
 
 exec java -jar lib/sonar-application-$SONAR_VERSION.jar \
   -Dsonar.log.console=true \
