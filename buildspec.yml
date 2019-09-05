@@ -15,6 +15,7 @@ phases:
       - echo $IMAGE_URI
   build:
     commands:
+      - echo $SONAR_MYSQL_ENDPOINT
       - docker build --build-arg SONAR_MYSQL_ENDPOINT=$SONAR_MYSQL_ENDPOINT -t $IMAGE_URI .
   post_build:
     commands:
