@@ -10,7 +10,7 @@ ENV SONAR_VERSION=6.1 \
     # Defaults to using H2
     SONARQUBE_JDBC_USERNAME=sonar \
     SONARQUBE_JDBC_PASSWORD=sonar \
-    SONARQUBE_JDBC_URL=
+    SONARQUBE_JDBC_URL=$SONAR_MYSQL_ENDPOINT
 
 ENV JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
 
