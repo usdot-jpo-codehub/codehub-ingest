@@ -248,7 +248,7 @@ def _process_file_line(line, ref_path):
 
 def runVirusScan(target):
     print('Running VScan on ' + target)
-    proc = Popen(['clamscan', '-i', '-o', '-r', target], stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(['clamscan', '-i', '-o', '-r', target], stdin=PIPE, stdout=PIPE, stderr=PIPE, encoding='utf8')
     output, err = proc.communicate()
 
     lines = output.splitlines()
@@ -322,7 +322,7 @@ def getESProjectOutput(repo_json):
 
 def createESInsertString(repo_json, index):
     idstr = json.loads(repo_json)['stage_id']
-    return '{"index": {"_index": "' + index + '", "_type": "project", "_id": "' + idstr + '"}}'
+    return '{"index": {"_index": "' + index + '", "_id": "' + idstr + '"}}'
 
 if __name__ == "__main__":
     document = ''
