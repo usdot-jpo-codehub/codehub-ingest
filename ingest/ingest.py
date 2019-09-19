@@ -187,7 +187,7 @@ def get_sonar_metrics(repo):
 
     res = '_response'
     for metric in metrics_list:
-        returned_res = requests.get(config['sonar_api_local_base_url']+'?resource='+repo['org']+':'+repo['project_name']+"&metrics="+metric, auth=('admin', 'admin'))
+        returned_res = requests.get(os.environ['SONAR_API_BASE_URL']+'/api/resources?resource='+repo['org']+':'+repo['project_name']+"&metrics="+metric, auth=('admin', 'admin'))
         returned_json = {}
         if(returned_res.status_code == 200):
             if(len(json.loads(returned_res.text)) > 0):

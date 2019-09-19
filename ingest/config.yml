@@ -1,14 +1,15 @@
 # The following configurations need to be set as environment variables:
 # - ELASTICSEARCH_API_BASE_URL
+# - SONAR_API_BASE_URL
 # - GITHUB_USER
 # - GITHUB_ACCESS_TOKEN
 
 
 # List of Github organizations to be cycled through and ingested
 orgs:
- - usdot-jpo-ode
- - usdot-its-jpo-data-portal
- - VolpeUSDOT
+ # - usdot-jpo-ode
+ # - usdot-its-jpo-data-portal
+ # - VolpeUSDOT
  - usdot-jpo-sdcsdw
 
 # List of individual repos to be ingested
@@ -34,4 +35,4 @@ sonar_health_metrics:
   - new_violations
 
 sonar_runner_path: /opt/sonar-runner/bin/sonar-runner
-sonar_api_local_base_url: http://localhost:9000/api/resources
+# sonar_api_local_base_url: http://localhost:9000/api/resources
