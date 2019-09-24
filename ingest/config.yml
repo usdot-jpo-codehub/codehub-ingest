@@ -7,9 +7,9 @@
 
 # List of Github organizations to be cycled through and ingested
 orgs:
- # - usdot-jpo-ode
- # - usdot-its-jpo-data-portal
- # - VolpeUSDOT
+ - usdot-jpo-ode
+ - usdot-its-jpo-data-portal
+ - VolpeUSDOT
  - usdot-jpo-sdcsdw
 
 # List of individual repos to be ingested
