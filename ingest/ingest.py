@@ -198,6 +198,7 @@ def get_sonar_metrics(repo):
                     else:
                         health_metrics_map[metric] = {}
             else:
+                print ('Health metrics not found for ' + repo['org']+'/'+repo['project_name'])
                 health_metrics_map[metric] = {}
     metrics_result = {}
     for metric in health_metrics_map:
@@ -332,6 +333,8 @@ if __name__ == "__main__":
     for repo in repos:
         print('Processing ' + repo['project_name'])
         execute_sonar(repo)
+        # Waiting 5 sec to allow sonar to process results before querying
+        time.sleep(5)
         repo_with_metrics = get_sonar_metrics(repo)
 
         es_code_json = getESCodeOutput(repo_with_metrics)
