@@ -11,6 +11,7 @@ import glob2
 import boto3
 from datetime import datetime
 import base64
+import time
 
 
 with open("config.yml", 'r') as stream:
