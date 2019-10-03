@@ -6,7 +6,7 @@ if [ "${1:0:1}" != '-' ]; then
   exec "$@"
 fi
 
-envsubst '${SONAR_API_BASE_URL}' < /opt/sonar-runner/conf/sonar-runner.properties > /opt/sonar-runner/conf/sonar-runner.properties
+envsubst '${SONAR_API_BASE_URL}' < /opt/sonar-runner/conf/sonar-runner.properties.template > /opt/sonar-runner/conf/sonar-runner.properties
 
 cd /opt/ingest
 echo 'Running ingest'

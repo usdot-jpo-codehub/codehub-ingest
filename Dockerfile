@@ -18,7 +18,7 @@ RUN apk update \
     && apk add --no-cache openjdk8-jre \
     && apk add --no-cache git \
     && apk add --no-cache clamav \
-    && apk add gettext libintl
+    && apk add gettext libintl 
 
 RUN apk add --no-cache python3 \
     && python3 -m ensurepip \
@@ -35,7 +35,7 @@ RUN cd /opt \
     && mv sonar-runner-$SONAR_RUNNER_VERSION sonar-runner \
     && rm sonar_runner.zip \
     && rm sonar-runner/conf/sonar-runner.properties \
-    && echo "sonar.host.url='${SONAR_API_BASE_URL}'" >> sonar-runner/conf/sonar-runner.properties
+    && echo "sonar.host.url=\${SONAR_API_BASE_URL}" >> sonar-runner/conf/sonar-runner.properties.template
 
 
 RUN freshclam
