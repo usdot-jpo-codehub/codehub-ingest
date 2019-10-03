@@ -11,6 +11,7 @@ import glob2
 import boto3
 from datetime import datetime
 import base64
+import time
 
 
 with open("config.yml", 'r') as stream:
@@ -24,7 +25,6 @@ def get_org_repos():
     org_repos = []
     for org in orgs:
         org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
-        print(org_repos_response.text)
         org_repos = org_repos + json.loads(org_repos_response.text)
 
     for ind in ind_repos:
@@ -187,7 +187,7 @@ def get_sonar_metrics(repo):
 
     res = '_response'
     for metric in metrics_list:
-        returned_res = requests.get(config['sonar_api_local_base_url']+'?resource='+repo['org']+':'+repo['project_name']+"&metrics="+metric, auth=('admin', 'admin'))
+        returned_res = requests.get(os.environ['SONAR_API_BASE_URL']+'/api/resources?resource='+repo['org']+':'+repo['project_name']+"&metrics="+metric, auth=('admin', 'admin'))
         returned_json = {}
         if(returned_res.status_code == 200):
             if(len(json.loads(returned_res.text)) > 0):
@@ -198,6 +198,7 @@ def get_sonar_metrics(repo):
                     else:
                         health_metrics_map[metric] = {}
             else:
+                print ('Health metrics not found for ' + repo['org']+'/'+repo['project_name'])
                 health_metrics_map[metric] = {}
     metrics_result = {}
     for metric in health_metrics_map:
@@ -332,6 +333,8 @@ if __name__ == "__main__":
     for repo in repos:
         print('Processing ' + repo['project_name'])
         execute_sonar(repo)
+        # Waiting 5 sec to allow sonar to process results before querying
+        time.sleep(5)
         repo_with_metrics = get_sonar_metrics(repo)
 
         es_code_json = getESCodeOutput(repo_with_metrics)
