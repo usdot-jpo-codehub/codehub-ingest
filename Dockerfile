@@ -1,7 +1,5 @@
 FROM python:3.7-alpine
 
-# ARG SONAR_API_BASE_URL
-
 ENV JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
 
 ENV SONAR_RUNNER_VERSION=2.4 \
