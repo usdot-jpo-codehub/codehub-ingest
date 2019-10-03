@@ -25,7 +25,6 @@ def get_org_repos():
     org_repos = []
     for org in orgs:
         org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
-        print(org_repos_response.text)
         org_repos = org_repos + json.loads(org_repos_response.text)
 
     for ind in ind_repos:
