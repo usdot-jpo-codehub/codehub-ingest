@@ -7,84 +7,84 @@
 
 # List of Github organizations to be cycled through and ingested
 orgs:
- # - usdot-jpo-ode
- # - usdot-its-jpo-data-portal
- # - VolpeUSDOT
+ - usdot-jpo-ode
+ - usdot-its-jpo-data-portal
+ - VolpeUSDOT
  - usdot-jpo-sdcsdw
 
 # List of individual repos to be ingested
 individual_repos:
- # - Trihydro/smdm
- # - Trihydro/cvrm
- # - OSADP/ETFOMM
- # - OSADP/ATSPM
- # - OSADP/MMITSS_THEA
- # - OSADP/V2I-Hub
- # - OSADP/Construction-Work-Zone-Mitigation-Tool
- # - OSADP/STOL_Crossing
- # - OSADP/LA-FRATIS
- # - OSADP/SSAM
- # - OSADP/IMRCP
- # - OSADP/Mobile_D2X_Framework
- # - OSADP/RCVW
- # - OSADP/AMS-Aimsun-INFLO
- # - OSADP/MMITSS_CA_FIELD
- # - OSADP/SEMI-ODE
- # - OSADP/AMS-CACC-Aimsun
- # - OSADP/AMS-TCA-Aimsun
- # - OSADP/OpenAWAM
- # - OSADP/Pikalert-Vehicle-Data-Translator-
- # - OSADP/Data-Visualization-Tool
- # - OSADP/Glidepath
- # - OSADP/PortalRepo
- # - OSADP/Transportation-Analysis-Project-Costing-Tool
- # - OSADP/DTALite-AMS
- # - OSADP/D-RIDE-AMS
- # - OSADP/Road-Weather-Performance-Management-
- # - OSADP/P-ODE
- # - OSADP/MMITSS_AZ_FIELD
- # - OSADP/DIRECTView-AMS
- # - OSADP/Traffic-Congestion-State-Predictor-Tool
+ - Trihydro/smdm
+ - Trihydro/cvrm
+ - OSADP/ETFOMM
+ - OSADP/ATSPM
+ - OSADP/MMITSS_THEA
+ - OSADP/V2I-Hub
+ - OSADP/Construction-Work-Zone-Mitigation-Tool
+ - OSADP/STOL_Crossing
+ - OSADP/LA-FRATIS
+ - OSADP/SSAM
+ - OSADP/IMRCP
+ - OSADP/Mobile_D2X_Framework
+ - OSADP/RCVW
+ - OSADP/AMS-Aimsun-INFLO
+ - OSADP/MMITSS_CA_FIELD
+ - OSADP/SEMI-ODE
+ - OSADP/AMS-CACC-Aimsun
+ - OSADP/AMS-TCA-Aimsun
+ - OSADP/OpenAWAM
+ - OSADP/Pikalert-Vehicle-Data-Translator-
+ - OSADP/Data-Visualization-Tool
+ - OSADP/Glidepath
+ - OSADP/PortalRepo
+ - OSADP/Transportation-Analysis-Project-Costing-Tool
+ - OSADP/DTALite-AMS
+ - OSADP/D-RIDE-AMS
+ - OSADP/Road-Weather-Performance-Management-
+ - OSADP/P-ODE
+ - OSADP/MMITSS_AZ_FIELD
+ - OSADP/DIRECTView-AMS
+ - OSADP/Traffic-Congestion-State-Predictor-Tool
  - OSADP/INFLO-AMS
- # - OSADP/eTEXAS
- # - OSADP/Speed-Harmonization
- # - OSADP/TCA
- # - OSADP/CV-DSRC-Message-Parser
- # - OSADP/CACC
- # - OSADP/Lane-Change
- # - OSADP/Motion-Logger
- # - OSADP/UMinn-SmarTrAC
- # - OSADP/CVD-DME
- # - OSADP/VEDM-CAV
- # - OSADP/SPaT
- # - OSADP/SRI
- # - connectedvcs/fedgov-cv-asn1
- # - connectedvcs/fedgov-cv-panel
- # - connectedvcs/fedgov-cv-parent
- # - connectedvcs/fedgov-cv-message-builder
- # - connectedvcs/fedgov-cv-rsm-converter
- # - connectedvcs/fedgov-cv-TIMcreator-webapp
- # - connectedvcs/fedgov-cv-ISDcreator-webapp
- # - connectedvcs/fedgov-cv-message-validator-webapp
- # - usdot-fhwa-stol/CARMABase
- # - usdot-fhwa-stol/CARMAUtils
- # - usdot-fhwa-stol/CARMAWebUi
- # - usdot-fhwa-stol/CARMAAvtVimbaDriver
- # - usdot-fhwa-stol/CARMACadillacSrx2013ControllerDriver
- # - usdot-fhwa-stol/CARMADelphiEsrDriver
- # - usdot-fhwa-stol/CARMADelphiSrr2Driver
- # - usdot-fhwa-stol/CARMAFreightliner2012ControllerDriver
- # - usdot-fhwa-stol/CARMATorcPinpointDriver
- # - usdot-fhwa-stol/CARMATorcXgvControllerDriver
- # - usdot-fhwa-stol/CARMACohdaDsrcDriver
- # - usdot-fhwa-stol/CARMAVelodyneLidarDriver
- # - usdot-fhwa-stol/CARMANovatelGpsDriver
- # - usdot-fhwa-stol/CARMASscInterfaceWrapper
- # - usdot-fhwa-stol/CARMAConfig
- # - usdot-fhwa-stol/CARMAMsgs
- # - usdot-fhwa-stol/CARMAPlatform
- # - usdot-fhwa-stol/CARMAVehicleModelFramework
- # - usdot-fhwa-stol/CARMACloud
+ - OSADP/eTEXAS
+ - OSADP/Speed-Harmonization
+ - OSADP/TCA
+ - OSADP/CV-DSRC-Message-Parser
+ - OSADP/CACC
+ - OSADP/Lane-Change
+ - OSADP/Motion-Logger
+ - OSADP/UMinn-SmarTrAC
+ - OSADP/CVD-DME
+ - OSADP/VEDM-CAV
+ - OSADP/SPaT
+ - OSADP/SRI
+ - connectedvcs/fedgov-cv-asn1
+ - connectedvcs/fedgov-cv-panel
+ - connectedvcs/fedgov-cv-parent
+ - connectedvcs/fedgov-cv-message-builder
+ - connectedvcs/fedgov-cv-rsm-converter
+ - connectedvcs/fedgov-cv-TIMcreator-webapp
+ - connectedvcs/fedgov-cv-ISDcreator-webapp
+ - connectedvcs/fedgov-cv-message-validator-webapp
+ - usdot-fhwa-stol/CARMABase
+ - usdot-fhwa-stol/CARMAUtils
+ - usdot-fhwa-stol/CARMAWebUi
+ - usdot-fhwa-stol/CARMAAvtVimbaDriver
+ - usdot-fhwa-stol/CARMACadillacSrx2013ControllerDriver
+ - usdot-fhwa-stol/CARMADelphiEsrDriver
+ - usdot-fhwa-stol/CARMADelphiSrr2Driver
+ - usdot-fhwa-stol/CARMAFreightliner2012ControllerDriver
+ - usdot-fhwa-stol/CARMATorcPinpointDriver
+ - usdot-fhwa-stol/CARMATorcXgvControllerDriver
+ - usdot-fhwa-stol/CARMACohdaDsrcDriver
+ - usdot-fhwa-stol/CARMAVelodyneLidarDriver
+ - usdot-fhwa-stol/CARMANovatelGpsDriver
+ - usdot-fhwa-stol/CARMASscInterfaceWrapper
+ - usdot-fhwa-stol/CARMAConfig
+ - usdot-fhwa-stol/CARMAMsgs
+ - usdot-fhwa-stol/CARMAPlatform
+ - usdot-fhwa-stol/CARMAVehicleModelFramework
+ - usdot-fhwa-stol/CARMACloud
 
 
 sonar_health_metrics:
