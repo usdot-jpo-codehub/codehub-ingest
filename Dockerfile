@@ -17,7 +17,9 @@ RUN apk update \
     && apk add --no-cache curl \
     && apk add --no-cache openjdk8-jre \
     && apk add --no-cache git \
-    && apk add --no-cache clamav
+    && apk add --no-cache clamav \
+    && apk add gettext libintl \
+    && mv /usr/bin/envsubst /usr/local/sbin/envsubst 
 
 RUN apk add --no-cache python3 \
     && python3 -m ensurepip \
@@ -26,6 +28,7 @@ RUN apk add --no-cache python3 \
     if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
     if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
     rm -r /root/.cache
+
 
 RUN cd /opt \
     && curl -o sonar_runner.zip -fSL http://repo1.maven.org/maven2/org/codehaus/sonar/runner/sonar-runner-dist/$SONAR_RUNNER_VERSION/sonar-runner-dist-$SONAR_RUNNER_VERSION.zip \
