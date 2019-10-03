@@ -1,6 +1,6 @@
 FROM python:3.7-alpine
 
-ARG SONAR_API_BASE_URL
+# ARG SONAR_API_BASE_URL
 
 ENV JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
 
@@ -33,7 +33,7 @@ RUN cd /opt \
     && mv sonar-runner-$SONAR_RUNNER_VERSION sonar-runner \
     && rm sonar_runner.zip \
     && rm sonar-runner/conf/sonar-runner.properties \
-    && echo "sonar.host.url=$SONAR_API_BASE_URL" >> sonar-runner/conf/sonar-runner.properties
+    && echo "sonar.host.url='${SONAR_API_BASE_URL}'" >> sonar-runner/conf/sonar-runner.properties
 
 
 RUN freshclam
