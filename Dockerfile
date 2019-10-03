@@ -18,8 +18,7 @@ RUN apk update \
     && apk add --no-cache openjdk8-jre \
     && apk add --no-cache git \
     && apk add --no-cache clamav \
-    && apk add gettext libintl \
-    && mv /usr/bin/envsubst /usr/local/sbin/envsubst 
+    && apk add gettext libintl
 
 RUN apk add --no-cache python3 \
     && python3 -m ensurepip \
