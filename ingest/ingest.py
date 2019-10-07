@@ -65,7 +65,7 @@ def map_repo_attributes(org_repos):
         repo['created_at'] = org_repo['created_at']
         repo['contributors'] = getRepoContributions(json.loads(get_github_property(org_repo, 'contributors')))['contributorsMap']
         repo['languagesJson'] = json.loads(get_github_property(org_repo, 'languages'))
-        readmeobj = json.loads(get_github_property(org_repo, 'contents/README.md'))
+        readmeobj = json.loads(get_github_property(org_repo, 'readme'))
         if 'content' in readmeobj:
             decoded_readme = str(base64.b64decode(readmeobj['content']),'utf-8')
             readmeobj['content'] = decoded_readme
