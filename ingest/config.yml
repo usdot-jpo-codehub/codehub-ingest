@@ -6,15 +6,71 @@
 
 
 # List of Github organizations to be cycled through and ingested
-orgs:
+# orgs:
  # - usdot-jpo-ode
  # - usdot-its-jpo-data-portal
  # - VolpeUSDOT
- - usdot-jpo-sdcsdw
+ # - usdot-jpo-sdcsdw
 
 # List of individual repos to be ingested
-individual_repos:
- - Trihydro/smdm
+# individual_repos:
+#  - VolpeUSDOT/PLT-Web-Map
+#  - VolpeUSDOT/rec-gov-analysis
+#  - VolpeUSDOT/gtfs-measures
+ # - VolpeUSDOT/caco-parking-map
+ # - VolpeUSDOT/SNVA
+ # - VolpeUSDOT/FTOT-Public
+ # - usdot-jpo-sdcsdw/per-xer-codec
+ # - usdot-jpo-sdcsdw/common-models
+ # - usdot-jpo-sdcsdw/fedgov-cv-message-validator-webapp
+ # - usdot-jpo-sdcsdw/fedgov-cv-webapp-websocket
+ # - usdot-jpo-sdcsdw/fedgov-cv-sso-webapp
+ # - usdot-jpo-sdcsdw/fedgov-cv-whtools-webapp
+ # - usdot-jpo-sdcsdw/udp-interface
+ # - usdot-jpo-sdcsdw/credentials-db
+ # - usdot-jpo-sdcsdw/tim-db
+ # - usdot-jpo-sdcsdw/jpo-sdcsdw
+ # - usdot-jpo-sdcsdw/fedgov-cv-webfragment-rest
+ # - usdot-jpo-sdcsdw/aws-metrics-and-reporting
+ # - usdot-its-jpo-data-portal/performance-dashboard
+ # - usdot-its-jpo-data-portal/datahub-ui
+ # - usdot-its-jpo-data-portal/sandbox
+ # - usdot-its-jpo-data-portal/RDE-Visualization-Website
+ # - usdot-its-jpo-data-portal/privacy-protection-application
+ # - usdot-its-jpo-data-portal/datahub-pages
+ # - usdot-its-jpo-data-portal/project-open-datagithubio
+ # - usdot-its-jpo-data-portal/canary-lambda
+ # - usdot-its-jpo-data-portal/metadata-query-function
+ # - usdot-its-jpo-data-portal/metadata_ingest
+ # - usdot-its-jpo-data-portal/cv_pilot_ingest
+ # - usdot-its-jpo-data-portal/boto3-sqs-extended-client-lib
+ # - usdot-its-jpo-data-portal/validation-results-slack-lambda
+ # - usdot-its-jpo-data-portal/data-access-coe-resources
+ # - usdot-its-jpo-data-portal/metrics_dtg_lambda
+ # - usdot-its-jpo-data-portal/its-dmp-data-dictionary
+ # - usdot-its-jpo-data-portal/dmp_analysis_script
+ # - usdot-its-jpo-data-portal/metrics_github_lambda
+ # - usdot-its-jpo-data-portal/metrics_sandbox_lambda
+ # - usdot-its-jpo-data-portal/datahub-search
+ # - usdot-jpo-ode/jpo-ode
+ # - usdot-jpo-ode/kafka-docker
+ # - usdot-jpo-ode/jpo-cvdp
+ # - usdot-jpo-ode/jpo-s3-deposit
+ # - usdot-jpo-ode/jpo-security
+ # - usdot-jpo-ode/usdot-jpo-odegithubio
+ # - usdot-jpo-ode/asn1c
+ # - usdot-jpo-ode/asn1_codec
+ # - usdot-jpo-ode/jpo-tim-builder
+ # - usdot-jpo-ode/1609dot2-asn
+ # - usdot-jpo-ode/per-xer-codec
+ # - usdot-jpo-ode/jpo-security-svcs
+ # - usdot-jpo-ode/jpo-ode-scms-asn
+ # - usdot-jpo-ode/scms-asn1
+ # - usdot-jpo-ode/jpo-wzdx
+ # - usdot-jpo-ode/jpo-record-parser
+ # - usdot-jpo-ode/jpo-sdw-depositor
+ # - usdot-jpo-ode/ode-output-validator-library
+ # - Trihydro/smdm
  # - Trihydro/cvrm
  # - OSADP/ETFOMM
  # - OSADP/ATSPM

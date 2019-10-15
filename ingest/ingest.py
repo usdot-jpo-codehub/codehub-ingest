@@ -17,22 +17,27 @@ import time
 with open("config.yml", 'r') as stream:
     config = yaml.load(stream, Loader=yaml.FullLoader)
 
-orgs = config['orgs']
-ind_repos = config['individual_repos']
+# orgs = config['orgs']
+# ind_repos = config['individual_repos']
+
 cloned_project_path = expanduser("~") + '/cloned_projects'
 
-def get_org_repos():
-    org_repos = []
-    for org in orgs:
-        org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
-        org_repos = org_repos + json.loads(org_repos_response.text)
+# >>>>>> TODO: replace get_org_repos() with function that calls ES and retrieves list of repos and associated ETags.
+#  using the returned ETAGs, make conditional calls to Github to request repos for processing.
+#  From there, the rest of the code should be plug and play
 
-    for ind in ind_repos:
-        response = requests.get('https://api.github.com/repos/' + ind + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
-        ind_repo = []
-        ind_repo.append(json.loads(response.text))
-        org_repos = org_repos + ind_repo
-    return org_repos
+# def get_org_repos():
+#     org_repos = []
+#     # for org in orgs:
+#     #     org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
+#     #     org_repos = org_repos + json.loads(org_repos_response.text)
+
+#     for ind in ind_repos:
+#         response = requests.get('https://api.github.com/repos/' + ind + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
+#         ind_repo = []
+#         ind_repo.append(json.loads(response.text))
+#         org_repos = org_repos + ind_repo
+#     return org_repos
 
 def map_repo_attributes(org_repos):
     repos = []
@@ -326,9 +331,32 @@ def createESInsertString(repo_json, index):
     return '{"index": {"_index": "' + index + '", "_id": "' + idstr + '"}}'
 
 if __name__ == "__main__":
+    updated_repos = []
+    update_document = ''
+    repo_list_resp = requests.get(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/repos/_search')
+    repo_list_json = json.loads(repo_list_resp.text)['hits']['hits']
+    for repojson in repo_list_json:
+        repo_name = repojson['_source']['repo']
+        repo_etag = repojson['_source']['etag']
+        ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
+        if (ghresponse.headers['Status'] != '304 Not Modified'):
+            print("Adding " + repo_name + " to batch and updating etag")
+            update_document += '{"index": {"_index": "repos", "_id": "' + repo_name + '"}} \r\n'
+            update_document += json.dumps({'repo': repo_name, 'etag': ghresponse.headers['ETag']}) + '\r\n'
+            
+            updated_repos.append(json.loads(ghresponse.text))
+        else:
+            print("Repo " + repo_name + " already up to date. Skipping...")
+
+    if(update_document != ''):
+        print('Updating Local ETags')
+        header = {'Content-type': 'application/json'}
+        es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=update_document, headers=header)
+        print('Data written to ES')
+        print(es_post_response.text)
+
     document = ''
-    org_repos = get_org_repos()
-    repos = map_repo_attributes(org_repos)
+    repos = map_repo_attributes(updated_repos)
     clone_repos(repos)
     for repo in repos:
         print('Processing ' + repo['project_name'])
@@ -348,18 +376,14 @@ if __name__ == "__main__":
         print(repo['project_name'] + ' processed')
 
     # # # send to ES
-    print('Writing data to ES')
-    header = {'Content-type': 'application/json'}
-    es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=document, headers=header)
-    print('Data written to ES')
-    print(es_post_response.text)
+    if(document != ''):
+        print('Writing data to ES')
+        header = {'Content-type': 'application/json'}
+        es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=document, headers=header)
+        print('Data written to ES')
+        print(es_post_response.text)
 
-    # # # Write to Kindred (Not yet supported)
-
-    # es_get_response = requests.get('http://localhost:9200/projects/_search/?size=10000')
-    # # print(es_get_response.text)
-    # print('writing to Kindred...')
-    # kindred_post_response = requests.post('http://localhost:8082/recommendation-service/api/v1/update_doc_sim', data=es_get_response.text, headers=header)
-    # print(kindred_post_response.text)
+    else:
+        print('Elasticsearch already up to date.')
 
     print ("Donions!")
