@@ -348,13 +348,6 @@ if __name__ == "__main__":
         else:
             print("Repo " + repo_name + " already up to date. Skipping...")
 
-    if(update_document != ''):
-        print('Updating Local ETags')
-        header = {'Content-type': 'application/json'}
-        es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=update_document, headers=header)
-        print('Data written to ES')
-        print(es_post_response.text)
-
     document = ''
     repos = map_repo_attributes(updated_repos)
     clone_repos(repos)
@@ -385,5 +378,12 @@ if __name__ == "__main__":
 
     else:
         print('Elasticsearch already up to date.')
+
+    if(update_document != ''):
+        print('Updating Local ETags')
+        header = {'Content-type': 'application/json'}
+        es_post_response = requests.post(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/_bulk', data=update_document, headers=header)
+        print('Data written to ES')
+        print(es_post_response.text)
 
     print ("Donions!")
