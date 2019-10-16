@@ -333,7 +333,7 @@ def createESInsertString(repo_json, index):
 if __name__ == "__main__":
     updated_repos = []
     update_document = ''
-    repo_list_resp = requests.get(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/repos/_search')
+    repo_list_resp = requests.get(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/repos/_search?size=10000')
     repo_list_json = json.loads(repo_list_resp.text)['hits']['hits']
     for repojson in repo_list_json:
         repo_name = repojson['_source']['repo']
