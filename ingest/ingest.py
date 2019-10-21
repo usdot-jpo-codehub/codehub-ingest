@@ -17,27 +17,7 @@ import time
 with open("config.yml", 'r') as stream:
     config = yaml.load(stream, Loader=yaml.FullLoader)
 
-# orgs = config['orgs']
-# ind_repos = config['individual_repos']
-
 cloned_project_path = expanduser("~") + '/cloned_projects'
-
-# >>>>>> TODO: replace get_org_repos() with function that calls ES and retrieves list of repos and associated ETags.
-#  using the returned ETAGs, make conditional calls to Github to request repos for processing.
-#  From there, the rest of the code should be plug and play
-
-# def get_org_repos():
-#     org_repos = []
-#     # for org in orgs:
-#     #     org_repos_response = requests.get('https://api.github.com/orgs/' + org + '/repos?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
-#     #     org_repos = org_repos + json.loads(org_repos_response.text)
-
-#     for ind in ind_repos:
-#         response = requests.get('https://api.github.com/repos/' + ind + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'])
-#         ind_repo = []
-#         ind_repo.append(json.loads(response.text))
-#         org_repos = org_repos + ind_repo
-#     return org_repos
 
 def map_repo_attributes(org_repos):
     repos = []
@@ -340,11 +320,14 @@ if __name__ == "__main__":
         repo_etag = repojson['_source']['etag']
         ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
         if (ghresponse.headers['Status'] != '304 Not Modified'):
-            print("Adding " + repo_name + " to batch and updating etag")
-            update_document += '{"index": {"_index": "repos", "_id": "' + repo_name + '"}} \r\n'
-            update_document += json.dumps({'repo': repo_name, 'etag': ghresponse.headers['ETag']}) + '\r\n'
+            if (ghresponse.headers['Status'] == '200 OK'):
+                print("Adding " + repo_name + " to batch and updating etag")
+                update_document += '{"index": {"_index": "repos", "_id": "' + repo_name + '"}} \r\n'
+                update_document += json.dumps({'repo': repo_name, 'etag': ghresponse.headers['ETag']}) + '\r\n'
             
-            updated_repos.append(json.loads(ghresponse.text))
+                updated_repos.append(json.loads(ghresponse.text))
+            else:
+                print("Error ingesting " + repo_name + ". ==> Skipping.")
         else:
             print("Repo " + repo_name + " already up to date. Skipping...")
 
