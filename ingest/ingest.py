@@ -316,20 +316,28 @@ if __name__ == "__main__":
     repo_list_resp = requests.get(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/repos/_search?size=10000')
     repo_list_json = json.loads(repo_list_resp.text)['hits']['hits']
     for repojson in repo_list_json:
-        repo_name = repojson['_source']['repo']
-        repo_etag = repojson['_source']['etag']
-        ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
-        if (ghresponse.headers['Status'] != '304 Not Modified'):
-            if (ghresponse.headers['Status'] == '200 OK'):
-                print("Adding " + repo_name + " to batch and updating etag")
-                update_document += '{"index": {"_index": "repos", "_id": "' + repo_name + '"}} \r\n'
-                update_document += json.dumps({'repo': repo_name, 'etag': ghresponse.headers['ETag']}) + '\r\n'
-            
-                updated_repos.append(json.loads(ghresponse.text))
+        repoobj = repojson['_source']
+        if repoobj['enabled'] == 'true':
+            repo_id = repojson['_id']
+            repo_name = repoobj['owner'] + '/' + repoobj['name']
+            repo_etag = repoobj['etag']
+            ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
+            if (ghresponse.headers['Status'] != '304 Not Modified'):
+                if (ghresponse.headers['Status'] == '200 OK'):
+                    current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                    print("Adding " + repo_name + " to batch and updating etag")
+                    update_document += '{"index": {"_index": "repos", "_id": "' + repo_id + '"}} \r\n'
+                    repoobj['etag'] = ghresponse.headers['ETag']
+                    repoobj['last_ingested'] = current_time
+                    update_document += json.dumps(repoobj) + '\r\n'
+
+                
+                    updated_repos.append(json.loads(ghresponse.text))
+                else:
+                    print("Error ingesting " + repo_name + ". ==> Skipping.")
+                    print("Error: " + ghresponse.headers['Status'] + ' ==> ' + ghresponse.text)
             else:
-                print("Error ingesting " + repo_name + ". ==> Skipping.")
-        else:
-            print("Repo " + repo_name + " already up to date. Skipping...")
+                print("Repo " + repo_name + " already up to date. Skipping...")
 
     document = ''
     repos = map_repo_attributes(updated_repos)
