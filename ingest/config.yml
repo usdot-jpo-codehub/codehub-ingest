@@ -14,5 +14,6 @@ sonar_health_metrics:
   - comments_lines_density
   - violations
   - new_violations
+  - sqale_index
 
 sonar_runner_path: /opt/sonar-runner/bin/sonar-runner
