@@ -12,6 +12,7 @@ import boto3
 from datetime import datetime
 import base64
 import time
+import hashlib
 
 
 with open("config.yml", 'r') as stream:
@@ -306,9 +307,8 @@ def getESProjectOutput(repo_json):
 
     return json.dumps(result)
 
-def createESInsertString(repo_json, index):
-    idstr = json.loads(repo_json)['stage_id']
-    return '{"index": {"_index": "' + index + '", "_id": "' + idstr + '"}}'
+def createESInsertString(repo_id, index):
+    return '{"index": {"_index": "' + index + '", "_id": "' + repo_id + '"}}'
 
 if __name__ == "__main__":
     updated_repos = []
@@ -352,9 +352,14 @@ if __name__ == "__main__":
         es_code_json = getESCodeOutput(repo_with_metrics)
         es_project_json = getESProjectOutput(repo)
 
-        document += createESInsertString(es_code_json, 'code') + '\r\n'
+        repo_id_hash = hashlib.md5(json.loads(es_project_json)['repository_url'].encode())
+        codehub_id = repo_id_hash.hexdigest()
+
+        print(codehub_id)
+
+        document += createESInsertString(codehub_id, 'code') + '\r\n'
         document += es_code_json + '\r\n'
-        document += createESInsertString(es_project_json, 'projects') + '\r\n'
+        document += createESInsertString(codehub_id, 'projects') + '\r\n'
         document += es_project_json + '\r\n'
 
         print(repo['project_name'] + ' processed')
