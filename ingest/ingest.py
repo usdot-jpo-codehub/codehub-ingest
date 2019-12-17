@@ -307,6 +307,11 @@ def getESProjectOutput(repo_json):
 
     return json.dumps(result)
 
+def sendSlackNotification(message):
+    header = {'Content-type': 'application/json'}
+    payload = '{"text":"' + os.environ['ENVIRONMENT_NAME'] + ' | ' + message + '"}'
+    slack_response = requests.post(os.environ['SLACK_WEBHOOK_URL'], data=payload, headers=header)
+
 def createESInsertString(repo_id, index):
     return '{"index": {"_index": "' + index + '", "_id": "' + repo_id + '"}}'
 
@@ -336,6 +341,7 @@ if __name__ == "__main__":
                 else:
                     print("Error ingesting " + repo_name + ". ==> Skipping.")
                     print("Error: " + ghresponse.headers['Status'] + ' ==> ' + ghresponse.text)
+                    sendSlackNotification('Error ingesting ' + repo_name)
             else:
                 print("Repo " + repo_name + " already up to date. Skipping...")
 
