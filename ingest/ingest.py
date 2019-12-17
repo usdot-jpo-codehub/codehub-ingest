@@ -78,52 +78,12 @@ def getAutoSuggestFields(repoName, repoDesc, orgName, languages, contributors):
     for contributor in contributors:
         contributorsList.append(contributors['login'])
 
-def getReleases(releasesJson):
-    results = []
-    for release in releasesJson:
-        result = {}
-        result['tag_name'] = release['tag_name']
-        result['name'] = release['name']
-        result['id'] = release['id']
-        # none of the test cases currently have assets or download counts. Will test this later
-        result['assets'] = []
-        result['downloads'] = 0
-        results.append(result)
-    return results
 
-def getForks(forksJson):
-    result = []
-    for fork in forksJson:
-        repo = {}
-        repo['id'] = str(fork['owner']['id']) + '-' + str(fork['id'])
-        repo['name'] = str(fork['name'])
-        repo['org_name'] = str(fork['owner']['login'])
-        result.append(repo)
-    return result
 
-def getRepoContributions(contributorsJson):
-    commitTotal = 0
-    contributors = []
-    for contributorJson in contributorsJson:
-        commitTotal += contributorJson['contributions']
-        contributor = {}
-        contributor['user_type'] = contributorJson['type']
-        if(contributorJson['type']=='User'):
-            contributor['username'] = contributorJson['login']
-            contributor['profile_url'] = contributorJson['html_url']
-            contributor['avatar_url'] = contributorJson['avatar_url']
-        else:
-            contributor['username'] = ''
-            contributor['profile_url'] = ''
-            contributor['avatar_url'] = ''
-        contributors.append(contributor)
-    contributionMap = {'commitTotal': commitTotal, 'contributorsMap': contributors}
-    return contributionMap
 
-def get_github_property(repo, property_name):
-    org = repo['owner']['login']
-    name = repo['name']
-    return requests.get('https://api.github.com/repos/' + org + '/' + name + '/' + property_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN']).text
+
+
+
 
 def clone_repos(repos):
   for repo in repos:
@@ -309,6 +269,180 @@ def getESProjectOutput(repo_json):
 
 def createESInsertString(repo_id, index):
     return '{"index": {"_index": "' + index + '", "_id": "' + repo_id + '"}}'
+
+############################################
+#     BEGIN REVISED SCHEMA CODE
+############################################
+
+# Pull list of visible repos from index
+# Query github api using etag for each repo, returning updated repos
+# Map response data to schema
+# Clone repo
+# Sonar Scan
+# Virus Scan
+# Reset LastUpdated, etc
+# Write to ES
+# Profit
+
+# def getReposToIngest("all"/"<repo_id>"):
+# return reposToIngest
+
+# def fetchModifiedRepoData(reposToIngest):
+# return modifiedRepoData
+
+# def mapRepoData(modifiedRepoData):
+# return unprocessedRepos
+
+# def processRepos(repos)
+# return processedRepos
+
+# def updateCodehubData(processedRepos)
+# return resultRepos
+
+# def writeToElasticSearch(resultRepos)
+# return esResult
+
+
+def getReposToIngest(repo = "all"):
+    reposToIngest = []
+    if repo == "all" :
+        repo_list_resp = requests.get(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/repositories/_search?size=10000')
+        repo_list_json = json.loads(repo_list_resp.text)['hits']['hits']
+        for repoESObj in repo_list_json:
+            if repoESObj['_source']['codehub_data']['isIngestionEnabled'] == 'true':
+                reposToIngest.append(repoESObj)
+
+    return reposToIngest
+
+
+def ingestRepos(repos):
+    for repo in repos:
+        # repo_id = repojson['_id']
+        repo_name = repo['source_data']['owner']['name'] + '/' + repo['source_data']['project_name']
+        repo_etag = repo['codehub_data']['etag']
+
+        ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
+
+        if (ghresponse.headers['Status'] != '304 Not Modified'):
+            if (ghresponse.headers['Status'] == '200 OK'):
+                print("Adding " + repo_name + " to batch and updating etag")
+                repo['codehub_data']['etag'] = ghresponse.headers['ETag']
+                
+                repo = mapRepoData(repo, ghresponse.text)
+
+                # clone repo TODO TODO TODO 
+
+                # PICK UP THE WORK HERE
+
+                # THIS IS WHERE STUFF NEEDS DOING
+
+                current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                repo['codehub_data']['last_ingested'] = current_time
+
+            else:
+                print("Error ingesting " + repo_name + ". ==> Skipping.")
+                print("Error: " + ghresponse.headers['Status'] + ' ==> ' + ghresponse.text)
+        else:
+            print("Repo " + repo_name + " already up to date. Skipping...")
+
+    return repos
+
+
+def mapRepoData(repo, githubData):
+    ghDataObj = json.loads(githubData)
+
+    repo['source_data']['name'] = ghDataObj['name']
+    repo['source_data']['repository_url'] = ghDataObj['html_url']
+    repo['source_data']['language'] = ghDataObj['language']
+    repo['source_data']['description'] = ghDataObj['description']
+    repo['source_data']['created_at'] = ghDataObj['created_at']
+    repo['source_data']['last_push'] = ghDataObj['pushed_at']
+    repo['source_data']['stars'] = ghDataObj['stargazers_count']
+    repo['source_data']['watchers'] = ghDataObj['watchers_count']
+
+    repo['source_data']['owner'] = getGithubOwnerObject(githubData)
+
+    contributionMap = getRepoContributions(json.loads(get_github_property(ghDataObj, 'contributors')))
+    repo['source_data']['commits'] = contributionMap['commitTotal']
+    repo['source_data']['contributors'] = contributionMap['contributorsMap']
+
+    repo['source_data']['forks'] = getForks(json.loads(get_github_property(ghDataObj, 'forks')))
+
+    repo['source_data']['readme'] = getReadme(json.loads(get_github_property(org_repo, 'readme')))
+
+    repo['source_data']['releases'] = getReleases(json.loads(get_github_property(org_repo, 'releases')))
+
+    return repo
+
+    
+    
+def get_github_property(repo, property_name):
+    owner = repo['owner']['login']
+    name = repo['name']
+    return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN']).text
+
+def getGithubOwnerObject(repo):
+    owner = {}
+    owner['name'] = repo['owner']['login']
+    owner['url'] = repo['owner']['url']
+    owner['avatar_url'] = repo['owner']['avatar_url']
+    owner['type'] = repo['owner']['type']
+    return owner
+
+def getRepoContributions(contributorsJson):
+    commitTotal = 0
+    contributors = []
+    for contributorJson in contributorsJson:
+        commitTotal += contributorJson['contributions']
+        contributor = {}
+        contributor['user_type'] = contributorJson['type']
+        if(contributorJson['type']=='User'):
+            contributor['username'] = contributorJson['login']
+            contributor['profile_url'] = contributorJson['html_url']
+            contributor['avatar_url'] = contributorJson['avatar_url']
+        else:
+            contributor['username'] = ''
+            contributor['profile_url'] = ''
+            contributor['avatar_url'] = ''
+        contributors.append(contributor)
+    contributionMap = {'commitTotal': commitTotal, 'contributorsMap': contributors}
+    return contributionMap
+
+def getForks(forksJson):
+    result = []
+    for fork in forksJson:
+        repo = {}
+        repo['id'] = str(fork['owner']['id']) + '-' + str(fork['id'])
+        repo['name'] = str(fork['name'])
+        repo['owner'] = str(fork['owner']['login'])
+        result.append(repo)
+    return result
+
+def getGithubReadmeObject(readmeObj):
+    if 'content' in readmeObj:
+        decoded_readme = str(base64.b64decode(readmeObj['content']),'utf-8')
+        readmeObj['content'] = decoded_readme
+    else:
+        repo['readmeRaw'] = {'content': '', 'url': ''}
+
+    return readmeObj
+
+def getReleases(releasesJson):
+    results = []
+    for release in releasesJson:
+        result = {}
+        result['tag_name'] = release['tag_name']
+        result['name'] = release['name']
+        result['id'] = release['id']
+        # none of the test cases currently have assets or download counts. Will test this later
+        result['assets'] = []
+        result['downloads'] = 0
+        results.append(result)
+    return results
+
+############################################
+#     END REVISED SCHEMA CODE
+############################################
 
 if __name__ == "__main__":
     updated_repos = []
