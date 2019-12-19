@@ -25,7 +25,7 @@ def getReposToIngest(repo = "all"):
         repo_list_resp = requests.get(os.environ['ELASTICSEARCH_API_BASE_URL'] + '/repositories/_search?size=10000')
         repo_list_json = json.loads(repo_list_resp.text)['hits']['hits']
         for repoESObj in repo_list_json:
-            if repoESObj['_source']['codehub_data']['isIngestionEnabled'] == True:
+            if repoESObj['_source']['codehubData']['isIngestionEnabled'] == True:
                 reposToIngest.append(repoESObj)
 
     return reposToIngest
@@ -34,15 +34,15 @@ def ingestRepos(repoESObjs):
     result = []
     for repoESObj in repoESObjs:
         repo = repoESObj['_source']
-        repo_name = repo['source_data']['owner']['name'] + '/' + repo['source_data']['name']
-        repo_etag = repo['codehub_data']['etag']
+        repo_name = repo['sourceData']['owner']['name'] + '/' + repo['sourceData']['name']
+        repo_etag = repo['codehubData']['etag']
 
         ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
 
         if (ghresponse.headers['Status'] != '304 Not Modified'):
             if (ghresponse.headers['Status'] == '200 OK'):
                 print("Adding " + repo_name + " to batch and updating etag")
-                repo['codehub_data']['etag'] = ghresponse.headers['ETag']
+                repo['codehubData']['etag'] = ghresponse.headers['ETag']
                 
                 repo = mapRepoData(repo, ghresponse.text)
                 repo = getGeneratedData(repo)
@@ -81,26 +81,27 @@ def writeToElasticSearch(repoESObjs):
 def mapRepoData(repo, githubData):
     ghDataObj = json.loads(githubData)
 
-    repo['source_data']['name'] = ghDataObj['name']
-    repo['source_data']['repository_url'] = ghDataObj['html_url']
-    repo['source_data']['language'] = ghDataObj['language']
-    repo['source_data']['description'] = ghDataObj['description']
-    repo['source_data']['created_at'] = ghDataObj['created_at']
-    repo['source_data']['last_push'] = ghDataObj['pushed_at']
-    repo['source_data']['stars'] = ghDataObj['stargazers_count']
-    repo['source_data']['watchers'] = ghDataObj['watchers_count']
+    repo['sourceData']['name'] = ghDataObj['name']
+    repo['sourceData']['repositoryUrl'] = ghDataObj['html_url']
+    repo['sourceData']['language'] = ghDataObj['language']
+    repo['sourceData']['languages'] = json.loads(get_github_property(repo, 'languages'))
+    repo['sourceData']['description'] = ghDataObj['description']
+    repo['sourceData']['created_at'] = ghDataObj['created_at']
+    repo['sourceData']['lastPush'] = ghDataObj['pushed_at']
+    repo['sourceData']['stars'] = ghDataObj['stargazers_count']
+    repo['sourceData']['watchers'] = ghDataObj['watchers_count']
 
-    repo['source_data']['owner'] = getGithubOwnerObject(ghDataObj)
+    repo['sourceData']['owner'] = getGithubOwnerObject(ghDataObj)
 
     contributionMap = getRepoContributions(json.loads(get_github_property(repo, 'contributors')))
-    repo['source_data']['commits'] = contributionMap['commitTotal']
-    repo['source_data']['contributors'] = contributionMap['contributorsMap']
+    repo['sourceData']['commits'] = contributionMap['commitTotal']
+    repo['sourceData']['contributors'] = contributionMap['contributorsMap']
 
-    repo['source_data']['forks'] = getForks(json.loads(get_github_property(repo, 'forks')))
+    repo['sourceData']['forks'] = getForks(json.loads(get_github_property(repo, 'forks')))
 
-    repo['source_data']['readme'] = getGithubReadmeObject(json.loads(get_github_property(repo, 'readme')))
+    repo['sourceData']['readme'] = getGithubReadmeObject(json.loads(get_github_property(repo, 'readme')))
 
-    repo['source_data']['releases'] = getReleases(json.loads(get_github_property(repo, 'releases')))
+    repo['sourceData']['releases'] = getReleases(json.loads(get_github_property(repo, 'releases')))
 
     return repo  
     
@@ -112,35 +113,35 @@ def getGeneratedData(repo):
     time.sleep(5)
 
     # retrieve Sonar results
-    repo['generated_data']['sonar_metrics'] = get_sonar_metrics(repo)
+    repo['generatedData']['sonarMetrics'] = get_sonar_metrics(repo)
     # run virus scan
-    repo['generated_data']['vscan'] = runVirusScan(repo)
+    repo['generatedData']['vscan'] = runVirusScan(repo)
 
-    repo['generated_data']['rank'] = calculateRank(repo)
+    repo['generatedData']['rank'] = calculateRank(repo)
 
     return repo
 
 def updateCodehubData(repo):
     current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    repo['codehub_data']['last_ingested'] = current_time
+    repo['codehubData']['lastIngested'] = current_time
 
-    if (repo['codehub_data']['isIngested'] == False):
-        repo['codehub_data']['isIngested'] = True
-        repo['codehub_data']['isVisible'] = True
+    if (repo['codehubData']['isIngested'] == False):
+        repo['codehubData']['isIngested'] = True
+        repo['codehubData']['isVisible'] = True
     return repo
 
 
 
 def get_github_property(repo, property_name):
-    owner = repo['source_data']['owner']['name']
-    name = repo['source_data']['name']
+    owner = repo['sourceData']['owner']['name']
+    name = repo['sourceData']['name']
     return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN']).text
 
 def getGithubOwnerObject(repo):
     owner = {}
     owner['name'] = repo['owner']['login']
     owner['url'] = repo['owner']['url']
-    owner['avatar_url'] = repo['owner']['avatar_url']
+    owner['avatarUrl'] = repo['owner']['avatar_url']
     owner['type'] = repo['owner']['type']
     return owner
 
@@ -150,15 +151,15 @@ def getRepoContributions(contributorsJson):
     for contributorJson in contributorsJson:
         commitTotal += contributorJson['contributions']
         contributor = {}
-        contributor['user_type'] = contributorJson['type']
+        contributor['userType'] = contributorJson['type']
         if(contributorJson['type']=='User'):
             contributor['username'] = contributorJson['login']
-            contributor['profile_url'] = contributorJson['html_url']
-            contributor['avatar_url'] = contributorJson['avatar_url']
+            contributor['profileUrl'] = contributorJson['html_url']
+            contributor['avatarUrl'] = contributorJson['avatar_url']
         else:
             contributor['username'] = ''
-            contributor['profile_url'] = ''
-            contributor['avatar_url'] = ''
+            contributor['profileUrl'] = ''
+            contributor['avatarUrl'] = ''
         contributors.append(contributor)
     contributionMap = {'commitTotal': commitTotal, 'contributorsMap': contributors}
     return contributionMap
@@ -188,7 +189,7 @@ def getReleases(releasesJson):
     results = []
     for release in releasesJson:
         result = {}
-        result['tag_name'] = release['tag_name']
+        result['tagName'] = release['tag_name']
         result['name'] = release['name']
         result['id'] = release['id']
         # none of the test cases currently have assets or download counts. Will test this later
@@ -198,12 +199,12 @@ def getReleases(releasesJson):
     return results
 
 def calculateRank(repo):
-    result = (repo['source_data']['stars']*3) + (repo['source_data']['watchers']*4) + (len(repo['source_data']['contributors'])*5) + repo['source_data']['commits']
+    result = (repo['sourceData']['stars']*3) + (repo['sourceData']['watchers']*4) + (len(repo['sourceData']['contributors'])*5) + repo['sourceData']['commits']
     return result
 
 def cloneGithubRepo(repo):
-    ownerName = repo['source_data']['owner']['name']
-    repoName = repo['source_data']['name']
+    ownerName = repo['sourceData']['owner']['name']
+    repoName = repo['sourceData']['name']
 
     rootdir = expanduser("~") + '/cloned_projects'
     repodir = rootdir + '/' + ownerName + '/' + repoName
@@ -220,8 +221,8 @@ def cloneGithubRepo(repo):
 
 
 def runSonarScan(repo):
-    ownerName = repo['source_data']['owner']['name']
-    repoName = repo['source_data']['name']
+    ownerName = repo['sourceData']['owner']['name']
+    repoName = repo['sourceData']['name']
 
     cloned_project_path = expanduser("~") + '/cloned_projects/' + ownerName + '/' + repoName
 
@@ -249,8 +250,8 @@ def runSonarScan(repo):
     os.chdir(curr_dir)
 
 def get_sonar_metrics(repo):
-    ownerName = repo['source_data']['owner']['name']
-    repoName = repo['source_data']['name']
+    ownerName = repo['sourceData']['owner']['name']
+    repoName = repo['sourceData']['name']
 
     metrics_list = config['sonar_health_metrics']
     health_metrics_map = {}
@@ -317,8 +318,8 @@ def _process_file_line(line, ref_path):
     return result
 
 def runVirusScan(repo):
-    ownerName = repo['source_data']['owner']['name']
-    repoName = repo['source_data']['name']
+    ownerName = repo['sourceData']['owner']['name']
+    repoName = repo['sourceData']['name']
 
     target = expanduser("~") + '/cloned_projects/' + ownerName + '/' + repoName
 
@@ -348,8 +349,8 @@ def runVirusScan(repo):
             if mName is None:
                 continue
             result[mName] = mValue
-    result['lastscan'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    result['reported_files'] = files
+    result['lastScan'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    result['reportedFiles'] = files
     return result
 
 def sendSlackNotification(message):
