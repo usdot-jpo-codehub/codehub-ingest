@@ -208,8 +208,7 @@ def cloneGithubRepo(repo):
 
     rootdir = expanduser("~") + '/cloned_projects'
     repodir = rootdir + '/' + ownerName + '/' + repoName
-    # if os.path.exists(repodir):
-    #     shutil.rmtree(repodir)
+
     if os.path.exists(repodir):
         os.chdir(repodir)
     else:
