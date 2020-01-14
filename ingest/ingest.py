@@ -90,6 +90,7 @@ def mapRepoData(repo, githubData):
     repo['sourceData']['lastPush'] = ghDataObj['pushed_at']
     repo['sourceData']['stars'] = ghDataObj['stargazers_count']
     repo['sourceData']['watchers'] = ghDataObj['watchers_count']
+    repo['sourceData']['defaultBranch'] = ghDataObj['default_branch']
 
     repo['sourceData']['owner'] = getGithubOwnerObject(ghDataObj)
 
