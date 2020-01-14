@@ -86,7 +86,7 @@ def mapRepoData(repo, githubData):
     repo['sourceData']['language'] = ghDataObj['language']
     repo['sourceData']['languages'] = json.loads(get_github_property(repo, 'languages'))
     repo['sourceData']['description'] = ghDataObj['description']
-    repo['sourceData']['created_at'] = ghDataObj['created_at']
+    repo['sourceData']['createdAt'] = ghDataObj['created_at']
     repo['sourceData']['lastPush'] = ghDataObj['pushed_at']
     repo['sourceData']['stars'] = ghDataObj['stargazers_count']
     repo['sourceData']['watchers'] = ghDataObj['watchers_count']
@@ -263,7 +263,7 @@ def get_sonar_metrics(repo):
             if(len(json.loads(returned_res.text)) > 0):
                 if 'msr' in json.loads(returned_res.text)[0]:
                     returned_json = json.loads(returned_res.text)[0]['msr']
-                    if len(returned_json) > 0:
+                    if len(returned_json) > 0:                        
                         health_metrics_map[metric] = returned_json[0]
                     else:
                         health_metrics_map[metric] = {}
@@ -273,7 +273,11 @@ def get_sonar_metrics(repo):
     metrics_result = {}
     for metric in health_metrics_map:
         if 'key' in health_metrics_map[metric]:
-            metrics_result.update({health_metrics_map[metric]['key']: health_metrics_map[metric]})
+            metric_obj = {}
+            metric_obj['key'] = health_metrics_map[metric]['key']
+            metric_obj['val'] = health_metrics_map[metric]['val']
+            metric_obj['frmt_val'] = health_metrics_map[metric]['frmt_val']
+            metrics_result.update({metric_obj['key']: metric_obj})
     return metrics_result
 
 def _process_metric_line(line):
