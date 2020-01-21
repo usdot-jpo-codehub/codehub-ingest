@@ -28,7 +28,7 @@ RUN apk add --no-cache python3 \
 
 
 RUN cd /opt \
-    && curl -o sonar_runner.zip -fSL http://repo1.maven.org/maven2/org/codehaus/sonar/runner/sonar-runner-dist/$SONAR_RUNNER_VERSION/sonar-runner-dist-$SONAR_RUNNER_VERSION.zip \
+    && curl -o sonar_runner.zip -fSL https://repo1.maven.org/maven2/org/codehaus/sonar/runner/sonar-runner-dist/$SONAR_RUNNER_VERSION/sonar-runner-dist-$SONAR_RUNNER_VERSION.zip \
     && unzip sonar_runner.zip \
     && mv sonar-runner-$SONAR_RUNNER_VERSION sonar-runner \
     && rm sonar_runner.zip \
