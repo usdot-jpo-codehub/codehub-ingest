@@ -39,8 +39,11 @@ def ingestRepos(repoESObjs):
 
         ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
 
+        # gh_rate_limit_remaining = 5000 # Default quota for Github.
+        gh_rate_limit_remaining = ghresponse.headers['X-RateLimit-Remaining']
         if (ghresponse.headers['Status'] != '304 Not Modified'):
             if (ghresponse.headers['Status'] == '200 OK'):
+                
                 print("Adding " + repo_name + " to batch and updating etag")
                 repo['codehubData']['etag'] = ghresponse.headers['ETag']
                 
@@ -59,6 +62,7 @@ def ingestRepos(repoESObjs):
         else:
             print("Repo " + repo_name + " already up to date. Skipping...")
 
+    sendSlackNotification("Ingest complete. " + str(gh_rate_limit_remaining) + " api calls remaining until reset")
     return result
 
 def writeToElasticSearch(repoESObjs):
