@@ -186,7 +186,7 @@ def getGithubReadmeObject(readmeObj):
         result['content'] = decoded_readme
         result['url'] = readmeObj['url']
     else:
-        repo['readmeRaw'] = {'content': '', 'url': ''}
+        result = {'content': '', 'url': ''}
 
     return result
 
