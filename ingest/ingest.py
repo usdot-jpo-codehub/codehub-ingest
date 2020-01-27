@@ -335,6 +335,10 @@ def runVirusScan(repo):
     proc = Popen(['clamscan', '-i', '-o', '-r', target], stdin=PIPE, stdout=PIPE, stderr=PIPE, encoding='utf8')
     output, err = proc.communicate()
 
+    print('Output content [' + ownerName + ':' + repoName + ']: ' + str(output) + '\r\n')
+    print('Err content [' + ownerName + ':' + repoName + ']: ' + str(err) + '\r\n')
+
+
     lines = output.splitlines()
     if len(lines) <= 0:
         return None
