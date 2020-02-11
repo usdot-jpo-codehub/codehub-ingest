@@ -117,8 +117,11 @@ def getGeneratedData(repo):
     # Waiting 5 sec to allow sonar to process results before querying
     time.sleep(5)
 
-    # retrieve Sonar results
-    repo['generatedData']['sonarMetrics'] = get_sonar_metrics(repo)
+    if 'sonarcloudId' in repo['codehubData']:
+        getSonarcloudMetrics(repo)
+    else:
+        # retrieve Sonar results
+        repo['generatedData']['sonarMetrics'] = get_sonar_metrics(repo)
     # run virus scan
     repo['generatedData']['vscan'] = runVirusScan(repo)
 
@@ -223,6 +226,23 @@ def cloneGithubRepo(repo):
     clone_url = 'https://' + os.environ['GITHUB_USER'] + ':' + os.environ['GITHUB_ACCESS_TOKEN']+'@github.com/' + ownerName + '/' + repoName + '.git'
     call(["git","clone",clone_url])
 
+def getSonarcloudMetrics(repo):
+    sonarcloudId = repo['codehubData']['sonarcloudId']
+    metricKeys = ['bugs','reliability_rating']
+    sonarcloudResp = requests.get('https://sonarcloud.io/api/measures/component?component=' + sonarcloudId + '&metricKeys=' + ','.join(metricKeys)).text
+
+
+    repoSonarcloudMetrics = json.loads(sonarcloudResp)['component']['measures']
+    print('SONARCLOUD Metrics:::')
+    print(repoSonarcloudMetrics)
+    # get sonarcloud id from repo object
+    # query for all metrics
+    # put in metrics object
+    # return
+
+    # things to consider:
+        # blank metrics
+        # project not found
 
 def runSonarScan(repo):
     ownerName = repo['sourceData']['owner']['name']
