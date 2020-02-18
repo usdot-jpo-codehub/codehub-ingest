@@ -37,7 +37,7 @@ def ingestRepos(repoESObjs):
         repo_name = repo['sourceData']['owner']['name'] + '/' + repo['sourceData']['name']
         repo_etag = repo['codehubData']['etag']
 
-        ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
+        ghresponse = requests.get('https://api.github.com/repos/' + repo_name, headers={'Authorization': 'token ' + os.environ['GITHUB_ACCESS_TOKEN'],'If-None-Match': repo_etag})
 
         # gh_rate_limit_remaining = 5000 # Default quota for Github.
         gh_rate_limit_remaining = ghresponse.headers['X-RateLimit-Remaining']
@@ -140,7 +140,7 @@ def updateCodehubData(repo):
 def get_github_property(repo, property_name):
     owner = repo['sourceData']['owner']['name']
     name = repo['sourceData']['name']
-    return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN']).text
+    return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name, headers={'Authorization': 'token ' + os.environ['GITHUB_ACCESS_TOKEN']}).text
 
 def getGithubOwnerObject(repo):
     owner = {}
