@@ -37,7 +37,7 @@ def ingestRepos(repoESObjs):
         repo_name = repo['sourceData']['owner']['name'] + '/' + repo['sourceData']['name']
         repo_etag = repo['codehubData']['etag']
 
-        ghresponse = requests.get('https://api.github.com/repos/' + repo_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN'], headers={'If-None-Match': repo_etag})
+        ghresponse = requests.get('https://api.github.com/repos/' + repo_name, headers={'Authorization': 'token ' + os.environ['GITHUB_ACCESS_TOKEN'],'If-None-Match': repo_etag})
 
         # gh_rate_limit_remaining = 5000 # Default quota for Github.
         gh_rate_limit_remaining = ghresponse.headers['X-RateLimit-Remaining']
@@ -93,7 +93,7 @@ def mapRepoData(repo, githubData):
     repo['sourceData']['createdAt'] = ghDataObj['created_at']
     repo['sourceData']['lastPush'] = ghDataObj['pushed_at']
     repo['sourceData']['stars'] = ghDataObj['stargazers_count']
-    repo['sourceData']['watchers'] = ghDataObj['watchers_count']
+    repo['sourceData']['watchers'] = ghDataObj['subscribers_count']
     repo['sourceData']['defaultBranch'] = ghDataObj['default_branch']
 
     repo['sourceData']['owner'] = getGithubOwnerObject(ghDataObj)
@@ -140,7 +140,7 @@ def updateCodehubData(repo):
 def get_github_property(repo, property_name):
     owner = repo['sourceData']['owner']['name']
     name = repo['sourceData']['name']
-    return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name + '?access_token='+os.environ['GITHUB_ACCESS_TOKEN']).text
+    return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name, headers={'Authorization': 'token ' + os.environ['GITHUB_ACCESS_TOKEN']}).text
 
 def getGithubOwnerObject(repo):
     owner = {}
@@ -334,6 +334,10 @@ def runVirusScan(repo):
     print('Running VScan on ' + target)
     proc = Popen(['clamscan', '-i', '-o', '-r', target], stdin=PIPE, stdout=PIPE, stderr=PIPE, encoding='utf8')
     output, err = proc.communicate()
+
+    print('Output content [' + ownerName + ':' + repoName + ']: ' + str(output) + '\r\n')
+    print('Err content [' + ownerName + ':' + repoName + ']: ' + str(err) + '\r\n')
+
 
     lines = output.splitlines()
     if len(lines) <= 0:
