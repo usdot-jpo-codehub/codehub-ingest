@@ -145,7 +145,7 @@ def get_github_property(repo, property_name):
 def getGithubOwnerObject(repo):
     owner = {}
     owner['name'] = repo['owner']['login']
-    owner['url'] = repo['owner']['url']
+    owner['url'] = repo['owner']['html_url']
     owner['avatarUrl'] = repo['owner']['avatar_url']
     owner['type'] = repo['owner']['type']
     return owner
