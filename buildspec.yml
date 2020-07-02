@@ -19,7 +19,7 @@ phases:
       - rm $HOME/.sonar/sonar-scanner.zip
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
       - export SONAR_SCANNER_OPTS="-server"
-      - sonar-scanner -Dsonar.projectKey=usdot-jpo-codehub_codehub-ingest -Dsonar.organization=usdot-jpo-codehub -Dsonar.sources=ingest -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=$CODEBUILD_GIT_BRANCH
+      - sonar-scanner -Dsonar.projectKey=usdot-jpo-codehub_codehub-ingest -Dsonar.organization=usdot-jpo-codehub -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=$CODEBUILD_GIT_BRANCH
       - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
       - CODEBUILD_RESOLVED_SOURCE_VERSION="${CODEBUILD_RESOLVED_SOURCE_VERSION:-$IMAGE_TAG}"
       - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
