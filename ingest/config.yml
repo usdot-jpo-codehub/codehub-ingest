@@ -1,4 +1,5 @@
 sonar_health_metrics:
+  - ncloc
   - bugs 
   - new_bugs
   - reliability_rating

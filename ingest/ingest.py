@@ -13,6 +13,7 @@ from datetime import datetime
 import base64
 import time
 import hashlib
+import re
 
 
 with open("config.yml", 'r') as stream:
@@ -95,6 +96,7 @@ def mapRepoData(repo, githubData):
     repo['sourceData']['stars'] = ghDataObj['stargazers_count']
     repo['sourceData']['watchers'] = ghDataObj['subscribers_count']
     repo['sourceData']['defaultBranch'] = ghDataObj['default_branch']
+    repo['sourceData']['forksCount'] = ghDataObj['forks_count']
 
     repo['sourceData']['owner'] = getGithubOwnerObject(ghDataObj)
 
@@ -102,7 +104,7 @@ def mapRepoData(repo, githubData):
     repo['sourceData']['commits'] = contributionMap['commitTotal']
     repo['sourceData']['contributors'] = contributionMap['contributorsMap']
 
-    repo['sourceData']['forks'] = getForks(json.loads(get_github_property(repo, 'forks')))
+    repo['sourceData']['forks'] = getForks(repo['sourceData']['owner']['name'], repo['sourceData']['name'])
 
     repo['sourceData']['readme'] = getGithubReadmeObject(json.loads(get_github_property(repo, 'readme')))
 
@@ -135,12 +137,16 @@ def updateCodehubData(repo):
         repo['codehubData']['isVisible'] = True
     return repo
 
+def get_github_url_response(url):
+    return requests.get(url, headers={'Authorization': 'token ' + os.environ['GITHUB_ACCESS_TOKEN']})
 
+def get_github_response(owner, name, property_name):
+    return get_github_url_response('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name)
 
 def get_github_property(repo, property_name):
     owner = repo['sourceData']['owner']['name']
     name = repo['sourceData']['name']
-    return requests.get('https://api.github.com/repos/' + owner + '/' + name + '/' + property_name, headers={'Authorization': 'token ' + os.environ['GITHUB_ACCESS_TOKEN']}).text
+    return get_github_response(owner, name, property_name).text
 
 def getGithubOwnerObject(repo):
     owner = {}
@@ -169,14 +175,57 @@ def getRepoContributions(contributorsJson):
     contributionMap = {'commitTotal': commitTotal, 'contributorsMap': contributors}
     return contributionMap
 
-def getForks(forksJson):
+def getForks(ownerName, name):
     result = []
-    for fork in forksJson:
-        repo = {}
-        repo['id'] = str(fork['owner']['id']) + '-' + str(fork['id'])
-        repo['name'] = str(fork['name'])
-        repo['owner'] = str(fork['owner']['login'])
-        result.append(repo)
+    if ownerName is None or name is None:
+        return result
+
+    url = 'https://api.github.com/repos/{}/{}/forks'.format(ownerName, name)
+    morePages = True
+    pageIndex = 0
+    pages = []
+    while morePages:
+        response = get_github_url_response(url)
+        if response.headers['Status'] != '200 OK':
+            return result
+
+        if pageIndex == 0:
+            pages = getForkPages(response)
+
+        forksJson = json.loads(response.text)
+        for fork in forksJson:
+            repo = {}
+            repo['id'] = str(fork['owner']['id']) + '-' + str(fork['id'])
+            repo['name'] = str(fork['name'])
+            repo['owner'] = str(fork['owner']['login'])
+            result.append(repo)
+
+        if len(pages) > 0 and pageIndex < len(pages):
+            url = pages[pageIndex]
+            pageIndex = pageIndex + 1
+        else:
+            morePages = False
+
+    return result
+
+def getForkPages(response):
+    result = []
+    if 'link' not in response.headers:
+        return result
+
+    pageNumbers = re.findall(r'page\=(.+?)\>', response.headers['link'])
+    if pageNumbers is None or len(pageNumbers)<2:
+        return result
+    lastPageNumber = int(pageNumbers[1])
+
+    urls = re.findall(r'\<(.+?)\?', response.headers['link'])
+    if urls is None or len(urls) == 0:
+        return result
+    url = urls[0]
+
+    for p in range(2,lastPageNumber+1):
+        result.append(url+'?page={}'.format(p))
+
     return result
 
 def getGithubReadmeObject(readmeObj):
@@ -366,9 +415,10 @@ def runVirusScan(repo):
     return result
 
 def sendSlackNotification(message):
-    header = {'Content-type': 'application/json'}
-    payload = '{"text":"' + os.environ['ENVIRONMENT_NAME'] + ' | ' + message + '"}'
-    slack_response = requests.post(os.environ['SLACK_WEBHOOK_URL'], data=payload, headers=header)
+    if 'SLACK_WEBHOOK_URL' in os.environ:
+        header = {'Content-type': 'application/json'}
+        payload = '{"text":"' + os.environ['ENVIRONMENT_NAME'] + ' | ' + message + '"}'
+        slack_response = requests.post(os.environ['SLACK_WEBHOOK_URL'], data=payload, headers=header)
 
 
 if __name__ == "__main__":
@@ -376,6 +426,4 @@ if __name__ == "__main__":
     reposToIngest = getReposToIngest()
     ingestedRepos = ingestRepos(reposToIngest)
     writeToElasticSearch(ingestedRepos)
-    
-
     print ("Donions!")
