@@ -6,6 +6,8 @@ phases:
       docker: 18
   pre_build:
     commands:
+      - echo Logging into Dockerhub...
+      - echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
       - curl -fsSL https://raw.githubusercontent.com/usdot-jpo-codehub/aws-codebuild-extras/master/install >> extras.sh
       - . ./extras.sh 
       - echo $CODEBUILD_GIT_BRANCH
