@@ -127,6 +127,10 @@ def getGeneratedData(repo):
 
     repo['generatedData']['rank'] = calculateRank(repo)
 
+    print('Deleting local repo files')
+    deleteLocalRepo(repo)
+    print('Local files deleted')
+
     return repo
 
 def updateCodehubData(repo):
