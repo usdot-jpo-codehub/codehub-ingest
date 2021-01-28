@@ -14,6 +14,7 @@ import base64
 import time
 import hashlib
 import re
+import shutil
 
 
 with open("config.yml", 'r') as stream:
@@ -272,6 +273,15 @@ def cloneGithubRepo(repo):
     clone_url = 'https://' + os.environ['GITHUB_USER'] + ':' + os.environ['GITHUB_ACCESS_TOKEN']+'@github.com/' + ownerName + '/' + repoName + '.git'
     call(["git","clone",clone_url])
 
+def deleteLocalRepo(repo):
+    ownerName = repo['sourceData']['owner']['name']
+    repoName = repo['sourceData']['name']
+
+    rootdir = expanduser("~") + '/cloned_projects'
+    repodir = rootdir + '/' + ownerName + '/' + repoName
+
+    if os.path.exists(repodir):
+        shutil.rmtree(repodir)
 
 def runSonarScan(repo):
     ownerName = repo['sourceData']['owner']['name']
